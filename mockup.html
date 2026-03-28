@@ -2,8 +2,8 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nostálgicas - Calibrador de Mockup</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Nostálgicas - Mockup Pro</title>
     <script type="importmap">
       {
         "imports": {
@@ -13,36 +13,46 @@
       }
     </script>
     <style>
-        body { margin: 0; font-family: sans-serif; background: #fff; overflow: hidden; }
-        #panel { 
-            position: absolute; bottom: 10px; left: 10px; right: 10px;
-            background: rgba(255,255,255,0.9); padding: 15px; border-radius: 15px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.2); z-index: 100;
-            max-width: 400px; margin: auto;
+        body { margin: 0; padding: 0; font-family: sans-serif; background: #ffffff; overflow: hidden; touch-action: none; }
+        
+        /* Ajuste para Celular e PC */
+        #controls { 
+            position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+            width: 90%; max-width: 350px; background: rgba(255,255,255,0.9);
+            padding: 15px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            z-index: 100; display: flex; flex-direction: column; gap: 10px;
+            backdrop-filter: blur(5px); border: 1px solid #eee;
         }
-        .row { margin-bottom: 10px; }
-        label { display: block; font-size: 10px; font-weight: bold; color: #333; }
-        input[type="range"] { width: 100%; accent-color: #ff4081; }
-        .btn { background: #ff4081; color: white; border: none; width: 100%; padding: 10px; border-radius: 8px; font-weight: bold; }
+
+        .slider-group { display: flex; flex-direction: column; }
+        label { font-size: 10px; font-weight: bold; color: #666; margin-bottom: 2px; text-transform: uppercase; }
+        input[type="range"] { width: 100%; accent-color: #ff4081; cursor: pointer; }
+        
+        .btn-upload { 
+            background: #ff4081; color: white; border: none; padding: 12px; 
+            border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 14px;
+        }
+
+        canvas { display: block; width: 100vw; height: 100vh; }
     </style>
 </head>
 <body>
 
-<div id="panel">
-    <input type="file" id="upload" style="display:none">
-    <button class="btn" onclick="document.getElementById('upload').click()">1. CARREGAR ARTE</button>
+<div id="controls">
+    <input type="file" id="fileInput" style="display:none" accept="image/*">
+    <button class="btn-upload" onclick="document.getElementById('fileInput').click()">ESCOLHER ESTAMPA</button>
     
-    <div class="row">
-        <label>TAMANHO DA ARTE (ZOOM)</label>
-        <input type="range" id="uScale" min="0.01" max="10" step="0.01" value="1">
+    <div class="slider-group">
+        <label>Tamanho da Arte</label>
+        <input type="range" id="uScale" min="0.5" max="5" step="0.01" value="1.5">
     </div>
-    <div class="row">
-        <label>MOVER LATERAL (X)</label>
-        <input type="range" id="uOffsetX" min="-5" max="5" step="0.01" value="0">
+    <div class="slider-group">
+        <label>Posição Lateral (Girar)</label>
+        <input type="range" id="uOffsetX" min="-2" max="2" step="0.01" value="0.5">
     </div>
-    <div class="row">
-        <label>MOVER ALTURA (Y)</label>
-        <input type="range" id="uOffsetY" min="-5" max="5" step="0.01" value="0">
+    <div class="slider-group">
+        <label>Altura</label>
+        <input type="range" id="uOffsetY" min="-2" max="2" step="0.01" value="0.2">
     </div>
 </div>
 
@@ -53,86 +63,108 @@
 
     let scene, camera, renderer, controls, mug, texture;
 
+    // Seletores
+    const scaleIn = document.getElementById('uScale');
+    const xIn = document.getElementById('uOffsetX');
+    const yIn = document.getElementById('uOffsetY');
+
     init();
 
     function init() {
         scene = new THREE.Scene();
         scene.background = new THREE.Color(0xffffff);
 
-        camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.01, 1000);
+        // Câmera com FOV menor para dar efeito de "zoom de produto"
+        camera = new THREE.PerspectiveCamera(30, window.innerWidth / window.innerHeight, 0.1, 1000);
         
-        renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
         document.body.appendChild(renderer.domElement);
 
+        // Luzes mais fortes para cerâmica branca
         scene.add(new THREE.AmbientLight(0xffffff, 1.5));
-        const light = new THREE.DirectionalLight(0xffffff, 1);
+        const light = new THREE.PointLight(0xffffff, 1);
         light.position.set(5, 5, 5);
         scene.add(light);
 
         controls = new OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
 
         const loader = new GLTFLoader();
         loader.load('caneca.glb', (gltf) => {
             mug = gltf.scene;
             
-            // --- AJUSTE DE ESCALA AUTOMÁTICO ---
+            // Centralização e Zoom Automático
             const box = new THREE.Box3().setFromObject(mug);
             const size = box.getSize(new THREE.Vector3());
             const center = box.getCenter(new THREE.Vector3());
             
-            // Reposiciona a caneca no centro do mundo
             mug.position.x += (mug.position.x - center.x);
             mug.position.y += (mug.position.y - center.y);
             mug.position.z += (mug.position.z - center.z);
             
-            // Ajusta a câmera baseado no tamanho do objeto
+            // Aproxima a câmera baseado no tamanho real da caneca
             const maxDim = Math.max(size.x, size.y, size.z);
-            camera.position.set(0, size.y / 2, maxDim * 2.5);
-            controls.target.set(0, 0, 0);
+            camera.position.set(0, size.y / 2, maxDim * 3.5); // 3.5 é o fator de proximidade
+            controls.target.set(0, size.y / 2, 0);
 
             scene.add(mug);
+            
+            // Verifica se tem link pronto do cliente
+            checkUrl();
         });
 
+        window.addEventListener('resize', onWindowResize);
         animate();
     }
 
-    document.getElementById('upload').addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-            const loader = new THREE.TextureLoader();
-            loader.load(ev.target.result, (tex) => {
-                texture = tex;
-                // Configuração Crítica:
-                texture.wrapS = texture.wrapT = THREE.ClampToEdgeWrapping; 
-                
-                mug.traverse(child => {
-                    if(child.isMesh) {
-                        child.material.map = texture;
-                        child.material.needsUpdate = true;
-                    }
-                });
-                update();
+    function applyTexture(file) {
+        new THREE.TextureLoader().load(file, (tex) => {
+            texture = tex;
+            // ESSENCIAL: Faz a arte NÃO repetir (não vaza para dentro)
+            texture.wrapS = texture.wrapT = THREE.ClampToEdgeWrapping;
+            
+            mug.traverse(child => {
+                if(child.isMesh) {
+                    child.material.map = texture;
+                    child.material.needsUpdate = true;
+                }
             });
-        };
-        reader.readAsDataURL(file);
-    });
-
-    function update() {
-        if(!texture) return;
-        const s = 1 / document.getElementById('uScale').value;
-        texture.repeat.set(s, s);
-        texture.offset.set(
-            parseFloat(document.getElementById('uOffsetX').value),
-            parseFloat(document.getElementById('uOffsetY').value)
-        );
+            updateTex();
+        });
     }
 
-    ['uScale', 'uOffsetX', 'uOffsetY'].forEach(id => {
-        document.getElementById(id).addEventListener('input', update);
+    function updateTex() {
+        if(!texture) return;
+        const s = 1 / parseFloat(scaleIn.value);
+        texture.repeat.set(s, s);
+        texture.offset.set(parseFloat(xIn.value), parseFloat(yIn.value));
+    }
+
+    // Eventos
+    document.getElementById('fileInput').addEventListener('change', (e) => {
+        const reader = new FileReader();
+        reader.onload = (ev) => applyTexture(ev.target.result);
+        reader.readAsDataURL(e.target.files[0]);
     });
+
+    [scaleIn, xIn, yIn].forEach(el => el.addEventListener('input', updateTex));
+
+    function checkUrl() {
+        const p = new URLSearchParams(window.location.search);
+        if(p.get('foto')) {
+            applyTexture(p.get('foto'));
+            document.getElementById('controls').style.display = 'none';
+        }
+    }
+
+    function onWindowResize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    }
 
     function animate() {
         requestAnimationFrame(animate);
