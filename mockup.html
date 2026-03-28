@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Mockup Interativo - Caneca</title>
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+          "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+        }
+      }
+    </script>
+    <style>
+        body { margin: 0; font-family: sans-serif; overflow: hidden; }
+        #controls { position: absolute; top: 10px; left: 10px; background: rgba(255,255,255,0.9); padding: 15px; border-radius: 8px; z-index: 10; width: 250px; }
+        canvas { display: block; }
+        label { display: block; margin-top: 10px; font-size: 12px; }
+        input[type="range"] { width: 100%; }
+    </style>
+</head>
+<body>
+
+<div id="controls">
+    <h3>Configurar Estampa</h3>
+    <input type="file" id="upload" accept="image/*">
+    
+    <label>Tamanho (Escala)</label>
+    <input type="range" id="scale" min="0.5" max="3" step="0.1" value="1">
+    
+    <label>Posição Horizontal (X)</label>
+    <input type="range" id="offsetX" min="-1" max="1" step="0.01" value="0">
+    
+    <label>Posição Vertical (Y)</label>
+    <input type="range" id="offsetY" min="-1" max="1" step="0.01" value="0">
+    
+    <hr>
+    <button onclick="gerarLink()">Gerar Link para Cliente</button>
+</div>
+
+<script type="module">
+    import * as THREE from 'three';
+    import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+    let scene, camera, renderer, controls, mugModel, texture;
+
+    init();
+
+    function init() {
+        scene = new THREE.Scene();
+        scene.background = new THREE.Color(0xf0f0f0);
+
+        camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 0, 5);
+
+        renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        const light = new THREE.DirectionalLight(0xffffff, 1);
+        light.position.set(5, 5, 5).absolute;
+        scene.add(light, new THREE.AmbientLight(0xffffff, 0.8));
+
+        controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+
+        const loader = new GLTFLoader();
+        // SUBSTITUA PELO NOME DO SEU ARQUIVO .GLB
+        loader.load('seu_modelo_caneca.glb', (gltf) => {
+            mugModel = gltf.scene;
+            scene.add(mugModel);
+        });
+
+        animate();
+    }
+
+    // Lógica de Upload e Aplicação da Estampa
+    document.getElementById('upload').addEventListener('change', function(e) {
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            const img = new Image();
+            img.src = event.target.result;
+            img.onload = () => {
+                const newTexture = new THREE.Texture(img);
+                newTexture.needsUpdate = true;
+                texture = newTexture;
+                
+                // Aplica a textura no material da caneca
+                mugModel.traverse((child) => {
+                    if (child.isMesh) {
+                        child.material.map = texture;
+                        child.material.needsUpdate = true;
+                    }
+                });
+            };
+        };
+        reader.readAsDataURL(e.target.files[0]);
+    });
+
+    // Controles de ajuste (Escala e Offset)
+    document.getElementById('scale').addEventListener('input', (e) => {
+        if(texture) { texture.repeat.set(1/e.target.value, 1/e.target.value); }
+    });
+
+    function animate() {
+        requestAnimationFrame(animate);
+        controls.update();
+        renderer.render(scene, camera);
+    }
+</script>
+</body>
+</html>
