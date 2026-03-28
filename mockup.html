@@ -158,3 +158,32 @@
     document.getElementById('upload').addEventListener('change', (e) => {
         const reader = new FileReader();
         reader.onload = (ev) => applyTexture(ev.target.result);
+        reader.readAsDataURL(e.target.files[0]);
+    });
+
+    ['scale', 'offsetX', 'offsetY'].forEach(id => {
+        document.getElementById(id).addEventListener('input', updateDecal);
+    });
+
+    function checkUrlParams() {
+        const p = new URLSearchParams(window.location.search);
+        if(p.get('foto')) {
+            applyTexture(p.get('foto'));
+            document.getElementById('ui-panel').style.display = 'none';
+        }
+    }
+
+    function onWindowResize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+    function animate() {
+        requestAnimationFrame(animate);
+        controls.update();
+        renderer.render(scene, camera);
+    }
+</script>
+</body>
+</html>
