@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nostálgicas - Sistema de Mockup Corrigido</title>
+    <title>Nostálgicas - Calibrador de Mockup</title>
     <script type="importmap">
       {
         "imports": {
@@ -13,202 +13,126 @@
       }
     </script>
     <style>
-        :root { --primary: #ff4081; }
-        body { margin: 0; font-family: 'Inter', sans-serif; background: #f0f0f0; overflow: hidden; }
-        
-        /* Painel Flutuante */
-        #ui-panel { 
-            position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
-            background: rgba(255,255,255,0.95); backdrop-filter: blur(10px);
-            padding: 20px; border-radius: 20px; width: 90%; max-width: 380px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.1); z-index: 100;
+        body { margin: 0; font-family: sans-serif; background: #fff; overflow: hidden; }
+        #panel { 
+            position: absolute; bottom: 10px; left: 10px; right: 10px;
+            background: rgba(255,255,255,0.9); padding: 15px; border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2); z-index: 100;
+            max-width: 400px; margin: auto;
         }
-
-        .control-group { margin-bottom: 12px; }
-        .control-group label { display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #555; margin-bottom: 4px; }
-        
-        input[type="range"] { width: 100%; height: 6px; border-radius: 3px; accent-color: var(--primary); outline: none; }
-        
-        .upload-btn {
-            background: var(--primary); color: white; border: none; padding: 12px;
-            width: 100%; border-radius: 10px; font-weight: bold; cursor: pointer; margin-bottom: 15px;
-            font-size: 14px;
-        }
-
-        #canvas-container { width: 100vw; height: 100vh; background: radial-gradient(circle, #ffffff 0%, #e0e0e0 100%); }
-        
-        /* Info do Cliente */
-        #client-info {
-            position: absolute; top: 20px; width: 100%; text-align: center;
-            color: #888; font-size: 12px; pointer-events: none; display: none;
-        }
+        .row { margin-bottom: 10px; }
+        label { display: block; font-size: 10px; font-weight: bold; color: #333; }
+        input[type="range"] { width: 100%; accent-color: #ff4081; }
+        .btn { background: #ff4081; color: white; border: none; width: 100%; padding: 10px; border-radius: 8px; font-weight: bold; }
     </style>
 </head>
 <body>
 
-<div id="client-info">Interaja com a caneca para ver todos os detalhes</div>
-
-<div id="ui-panel">
-    <input type="file" id="upload" accept="image/*" style="display:none">
-    <button class="upload-btn" onclick="document.getElementById('upload').click()">CARREGAR ESTAMPA</button>
+<div id="panel">
+    <input type="file" id="upload" style="display:none">
+    <button class="btn" onclick="document.getElementById('upload').click()">1. CARREGAR ARTE</button>
     
-    <div class="control-group">
-        <label>Tamanho da Arte (Zoom)</label>
-        <input type="range" id="scale" min="0.1" max="3" step="0.01" value="1">
+    <div class="row">
+        <label>TAMANHO DA ARTE (ZOOM)</label>
+        <input type="range" id="uScale" min="0.01" max="10" step="0.01" value="1">
     </div>
-
-    <div class="control-group">
-        <label>Posição Horizontal (Girar)</label>
-        <input type="range" id="offsetX" min="-1.5" max="1.5" step="0.01" value="0.5">
+    <div class="row">
+        <label>MOVER LATERAL (X)</label>
+        <input type="range" id="uOffsetX" min="-5" max="5" step="0.01" value="0">
     </div>
-
-    <div class="control-group">
-        <label>Altura da Arte</label>
-        <input type="range" id="offsetY" min="-1.5" max="1.5" step="0.01" value="0.2">
+    <div class="row">
+        <label>MOVER ALTURA (Y)</label>
+        <input type="range" id="uOffsetY" min="-5" max="5" step="0.01" value="0">
     </div>
 </div>
-
-<div id="canvas-container"></div>
 
 <script type="module">
     import * as THREE from 'three';
     import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
     import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
-    let scene, camera, renderer, controls, mugModel, texture;
-
-    const scaleInput = document.getElementById('scale');
-    const offsetXInput = document.getElementById('offsetX');
-    const offsetYInput = document.getElementById('offsetY');
+    let scene, camera, renderer, controls, mug, texture;
 
     init();
 
     function init() {
         scene = new THREE.Scene();
+        scene.background = new THREE.Color(0xffffff);
 
-        // 1. Câmera Ajustada (Mais Aberta e Próxima)
-        camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-        camera.position.set(0, 0.8, 2.8); // Foco centralizado e próximo
-
-        renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.01, 1000);
+        
+        renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-        renderer.outputColorSpace = THREE.SRGBColorSpace; // Cores corretas
-        document.getElementById('canvas-container').appendChild(renderer.domElement);
+        document.body.appendChild(renderer.domElement);
 
-        // 2. Iluminação de Estúdio (Branca e Suave)
-        scene.add(new THREE.AmbientLight(0xffffff, 1.2));
-        const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
-        dirLight.position.set(5, 5, 5);
-        scene.add(dirLight);
+        scene.add(new THREE.AmbientLight(0xffffff, 1.5));
+        const light = new THREE.DirectionalLight(0xffffff, 1);
+        light.position.set(5, 5, 5);
+        scene.add(light);
 
-        // 3. Carregar o Modelo da Caneca
-        const loader = new GLTFLoader();
-        loader.load('caneca.glb', (gltf) => {
-            mugModel = gltf.scene;
-            
-            // Centralizar modelo automaticamente
-            const box = new THREE.Box3().setFromObject(mugModel);
-            const center = box.getCenter(new THREE.Vector3());
-            mugModel.position.sub(center);
-            
-            // Garantir material base da caneca (branco cerâmica)
-            mugModel.traverse(child => {
-                if(child.isMesh) {
-                    child.material = new THREE.MeshStandardMaterial({ 
-                        color: 0xffffff, 
-                        roughness: 0.15, 
-                        metalness: 0.05 
-                    });
-                }
-            });
-
-            scene.add(mugModel);
-            checkUrlParams(); // Verifica se há foto no link do cliente
-
-        }, undefined, (error) => {
-            console.error('Erro ao carregar caneca.glb. Verifique o arquivo.', error);
-        });
-
-        // 4. Controles (Travar zoom para o cliente não se perder)
         controls = new OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
-        controls.minDistance = 2; // Distância mínima (perto)
-        controls.maxDistance = 4; // Distância máxima (longe)
-        controls.target.set(0, 0, 0);
 
-        window.addEventListener('resize', onWindowResize);
+        const loader = new GLTFLoader();
+        loader.load('caneca.glb', (gltf) => {
+            mug = gltf.scene;
+            
+            // --- AJUSTE DE ESCALA AUTOMÁTICO ---
+            const box = new THREE.Box3().setFromObject(mug);
+            const size = box.getSize(new THREE.Vector3());
+            const center = box.getCenter(new THREE.Vector3());
+            
+            // Reposiciona a caneca no centro do mundo
+            mug.position.x += (mug.position.x - center.x);
+            mug.position.y += (mug.position.y - center.y);
+            mug.position.z += (mug.position.z - center.z);
+            
+            // Ajusta a câmera baseado no tamanho do objeto
+            const maxDim = Math.max(size.x, size.y, size.z);
+            camera.position.set(0, size.y / 2, maxDim * 2.5);
+            controls.target.set(0, 0, 0);
+
+            scene.add(mug);
+        });
+
         animate();
     }
 
-    // Lógica para carregar a estampa
-    function applyTexture(source) {
-        new THREE.TextureLoader().load(source, (tex) => {
-            texture = tex;
-            texture.colorSpace = THREE.SRGBColorSpace;
-            
-            // CONFIGURAÇÃO CHAVE (Estilo Rapid Mockup)
-            // Impede que a arte se repita (Vaze para dentro ou embaixo)
-            texture.wrapS = THREE.ClampToEdgeWrapping; 
-            texture.wrapT = THREE.ClampToEdgeWrapping;
-            
-            updateTextureMapping(); // Aplica ajustes dos sliders
-
-            // Aplica a textura no material da caneca
-            mugModel.traverse((child) => {
-                if (child.isMesh) {
-                    child.material.map = texture;
-                    child.material.needsUpdate = true;
-                }
-            });
-        });
-    }
-
-    // Lógica dos Sliders
-    function updateTextureMapping() {
-        if (!texture) return;
-        
-        // Tamanho (Inverso para o slider ficar intuitivo)
-        const s = 1 / parseFloat(scaleInput.value);
-        texture.repeat.set(s, s);
-        
-        // Posição (Offset)
-        const ox = parseFloat(offsetXInput.value);
-        const oy = parseFloat(offsetYInput.value);
-        texture.offset.set(ox, oy);
-    }
-
-    // Eventos
     document.getElementById('upload').addEventListener('change', (e) => {
         const file = e.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = (event) => applyTexture(event.target.result);
-            reader.readAsDataURL(file);
-        }
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            const loader = new THREE.TextureLoader();
+            loader.load(ev.target.result, (tex) => {
+                texture = tex;
+                // Configuração Crítica:
+                texture.wrapS = texture.wrapT = THREE.ClampToEdgeWrapping; 
+                
+                mug.traverse(child => {
+                    if(child.isMesh) {
+                        child.material.map = texture;
+                        child.material.needsUpdate = true;
+                    }
+                });
+                update();
+            });
+        };
+        reader.readAsDataURL(file);
     });
 
-    [scaleInput, offsetXInput, offsetYInput].forEach(id => {
-        id.addEventListener('input', updateTextureMapping);
+    function update() {
+        if(!texture) return;
+        const s = 1 / document.getElementById('uScale').value;
+        texture.repeat.set(s, s);
+        texture.offset.set(
+            parseFloat(document.getElementById('uOffsetX').value),
+            parseFloat(document.getElementById('uOffsetY').value)
+        );
+    }
+
+    ['uScale', 'uOffsetX', 'uOffsetY'].forEach(id => {
+        document.getElementById(id).addEventListener('input', update);
     });
-
-    // Função do Link do Cliente (?foto=...)
-    function checkUrlParams() {
-        const p = new URLSearchParams(window.location.search);
-        const fotoUrl = p.get('foto');
-        if(fotoUrl) {
-            applyTexture(fotoUrl);
-            // Esconde o painel administrativo para o cliente
-            document.getElementById('ui-panel').style.display = 'none';
-            document.getElementById('client-info').style.display = 'block';
-        }
-    }
-
-    function onWindowResize() {
-        camera.aspect = window.innerWidth / window.innerHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(window.innerWidth, window.innerHeight);
-    }
 
     function animate() {
         requestAnimationFrame(animate);
