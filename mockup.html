@@ -112,7 +112,7 @@
         const raio = (size.x / 2) * 1.015; // Um tiquinho maior que a caneca
         const altura = size.y * 0.85;
         // O valor 4.0 no final cria o corte para a alça. Se a arte ainda aparecer na alça, diminua para 3.5.
-        const geo = new THREE.CylinderGeometry(raio, raio, altura, 64, 1, true, -2.0, 4.0);
+        const geo = new THREE.CylinderGeometry(raio, raio, altura,30, 1, true, -2.0, 4.0);
         
         estampa = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ 
             transparent: true, 
