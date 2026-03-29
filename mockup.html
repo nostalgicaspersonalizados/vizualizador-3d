@@ -2,40 +2,35 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Nostálgicas Studio - Fix Final</title>
+    <title>Nostálgicas Studio - Fix Real</title>
     <script type="importmap">
       { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js", "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/" } }
     </script>
     <script src="https://unpkg.com/fabric@5.3.0/dist/fabric.min.js"></script>
     <style>
-        body { margin: 0; display: flex; height: 100vh; font-family: sans-serif; background: #f4f4f9; overflow: hidden; }
-        #viewport { flex: 1; background: #ffffff; position: relative; }
-        #sidebar { width: 360px; background: #fff; border-left: 1px solid #ddd; padding: 20px; display: flex; flex-direction: column; z-index: 10; box-shadow: -2px 0 10px rgba(0,0,0,0.1); }
-        .editor-container { border: 2px solid #3376e3; margin: 15px 0; border-radius: 5px; background: #fff; }
-        .btn { background: #3376e3; color: white; border: none; padding: 12px; cursor: pointer; font-weight: bold; border-radius: 4px; width: 100%; margin-bottom: 10px; }
-        .btn-clean { background: #f8f9fa; color: #333; border: 1px solid #ccc; }
+        body { margin: 0; display: flex; height: 100vh; font-family: sans-serif; background: #eee; overflow: hidden; }
+        #render-area { flex: 1; background: #fff; position: relative; }
+        #menu { width: 350px; background: #fff; border-left: 2px solid #3376e3; padding: 20px; z-index: 10; }
+        .canvas-container { border: 1px solid #ccc; margin: 10px 0; background: #f9f9f9; }
+        .btn { background: #3376e3; color: #fff; border: none; padding: 12px; width: 100%; cursor: pointer; font-weight: bold; border-radius: 4px; margin-bottom: 5px; }
+        .btn-limpar { background: #666; font-size: 12px; }
     </style>
 </head>
 <body>
 
-<div id="viewport"></div>
+<div id="render-area"></div>
 
-<aside id="sidebar">
-    <h2 style="font-size: 1.2rem; margin-top: 0;">Personalizar Caneca</h2>
-    
-    <input type="file" id="imgLoader" style="display:none" accept="image/*">
-    <button class="btn" onclick="document.getElementById('imgLoader').click()">CARREGAR ARTE</button>
+<aside id="menu">
+    <h3 style="margin-top:0">Personalizar</h3>
+    <input type="file" id="file-upload" style="display:none" accept="image/*">
+    <button class="btn" onclick="document.getElementById('file-upload').click()">CARREGAR IMAGEM</button>
 
-    <div class="editor-container">
-        <canvas id="editor2d" width="320" height="135"></canvas>
+    <div class="canvas-container">
+        <canvas id="f-canvas" width="310" height="130"></canvas>
     </div>
 
-    <button class="btn btn-clean" onclick="limparAjustes()">CONCLUIR AJUSTE (Limpar)</button>
-    
-    <p style="font-size: 11px; color: #777; line-height: 1.4; margin-top: 15px;">
-        • Arraste a imagem e use as laterais para esticar.<br>
-        • A alça está protegida e não será pintada.
-    </p>
+    <button class="btn btn-limpar" onclick="concluir()">CONCLUIR (Remover Pontos Azuis)</button>
+    <p style="font-size:11px; color:#555">Dica: Use as laterais para esticar a largura.</p>
 </aside>
 
 <script type="module">
@@ -45,95 +40,84 @@
 
     let scene, camera, renderer, controls, mug, decal, fCanvas;
 
-    // --- 1. EDITOR 2D (FABRIC) ---
-    fCanvas = new fabric.Canvas('editor2d', { backgroundColor: '#ffffff' });
+    // --- 1. EDITOR 2D ---
+    fCanvas = new fabric.Canvas('f-canvas');
     fabric.Object.prototype.set({
         transparentCorners: false,
         cornerColor: '#3376e3',
         cornerSize: 8,
-        lockUniScaling: false // Permite esticar largura independente da altura
+        lockUniScaling: false
     });
 
-    window.limparAjustes = () => {
+    window.concluir = () => {
         fCanvas.discardActiveObject();
         fCanvas.requestRenderAll();
     };
 
     fCanvas.on('after:render', () => {
         if (!decal) return;
-        const texture = new THREE.CanvasTexture(fCanvas.getElement());
-        texture.colorSpace = THREE.SRGBColorSpace;
-        decal.material.map = texture;
+        const tex = new THREE.CanvasTexture(fCanvas.getElement());
+        tex.colorSpace = THREE.SRGBColorSpace;
+        decal.material.map = tex;
         decal.material.needsUpdate = true;
     });
 
-    // --- 2. AMBIENTE 3D (THREE.JS) ---
+    // --- 2. SETUP 3D ---
     scene = new THREE.Scene();
     scene.background = new THREE.Color(0xffffff);
 
-    camera = new THREE.PerspectiveCamera(45, (window.innerWidth - 360) / window.innerHeight, 0.01, 100);
-    camera.position.set(0, 0.1, 0.5); // Posição padrão segura
+    camera = new THREE.PerspectiveCamera(45, (window.innerWidth - 350) / window.innerHeight, 0.001, 100);
+    camera.position.set(0, 0.1, 0.4); // Câmera perto para canecas pequenas
 
     renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(window.innerWidth - 360, window.innerHeight);
-    renderer.setPixelRatio(window.devicePixelRatio);
-    document.getElementById('viewport').appendChild(renderer.domElement);
+    renderer.setSize(window.innerWidth - 350, window.innerHeight);
+    document.getElementById('render-area').appendChild(renderer.domElement);
 
     controls = new OrbitControls(camera, renderer.domElement);
-    scene.add(new THREE.AmbientLight(0xffffff, 1.5));
-    
-    const light = new THREE.PointLight(0xffffff, 1);
-    light.position.set(2, 2, 2);
-    scene.add(light);
+    scene.add(new THREE.AmbientLight(0xffffff, 2));
 
-    // --- 3. CARREGAR OBJ ---
+    // --- 3. CARREGAR MUG.OBJ ---
     const loader = new OBJLoader();
     loader.load('mug.obj', (obj) => {
         mug = obj;
 
-        // Ajuste de escala e posição para garantir que ela apareça
+        // Medir o tamanho real
         const box = new THREE.Box3().setFromObject(mug);
-        const size = box.getSize(new THREE.Vector3());
         const center = box.getCenter(new THREE.Vector3());
-        
-        mug.position.x = -center.x;
-        mug.position.y = -center.y;
-        mug.position.z = -center.z;
+        const size = box.getSize(new THREE.Vector3());
 
-        mug.traverse(child => {
-            if (child.isMesh) {
-                child.material = new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: 0.1, clearcoat: 1 });
-            }
+        // Centralizar a caneca no 0,0,0
+        mug.position.set(-center.x, -center.y, -center.z);
+
+        mug.traverse(c => {
+            if (c.isMesh) c.material = new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: 0.1 });
         });
         scene.add(mug);
 
-        // Criar a área da estampa (Cilindro que para antes da alça)
-        const radius = (size.x / 2) * 1.02; // Um tiquinho maior que a caneca
-        const h = size.y * 0.85;
-        // O valor 5.2 no final cria o corte para a alça
-        const geo = new THREE.CylinderGeometry(radius, radius, h, 64, 1, true, -2.2, 4.4);
-        
+        // Criar Estampa que NÃO pega na alça
+        // Raio levemente maior (1.01) para evitar que a imagem "trema" (z-fighting)
+        const geo = new THREE.CylinderGeometry(size.x/2 * 1.01, size.x/2 * 1.01, size.y * 0.85, 64, 1, true, -2.1, 4.2);
         decal = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ 
             transparent: true, 
             side: THREE.DoubleSide,
-            polygonOffset: true,
-            polygonOffsetFactor: -1
+            polygonOffset: true, 
+            polygonOffsetFactor: -1 
         }));
         
-        decal.rotation.y = Math.PI; 
+        decal.rotation.y = Math.PI; // Ajusta para a frente da caneca
         scene.add(decal);
 
-        // Ajusta a câmera para focar no tamanho da caneca carregada
-        camera.position.z = size.y * 3;
+        // Focar a câmera automaticamente no tamanho da caneca
+        camera.position.z = size.z * 3;
         controls.update();
     });
 
-    // --- 4. INTERAÇÃO ---
-    document.getElementById('imgLoader').onchange = (e) => {
+    // --- 4. UPLOAD ---
+    document.getElementById('file-upload').onchange = (e) => {
         const reader = new FileReader();
         reader.onload = (f) => {
             fabric.Image.fromURL(f.target.result, (img) => {
-                img.scaleToHeight(130);
+                img.scaleToHeight(120);
                 fCanvas.add(img);
                 fCanvas.setActiveObject(img);
             });
@@ -149,9 +133,9 @@
     animate();
 
     window.onresize = () => {
-        camera.aspect = (window.innerWidth - 360) / window.innerHeight;
+        camera.aspect = (window.innerWidth - 350) / window.innerHeight;
         camera.updateProjectionMatrix();
-        renderer.setSize(window.innerWidth - 360, window.innerHeight);
+        renderer.setSize(window.innerWidth - 350, window.innerHeight);
     };
 </script>
 </body>
