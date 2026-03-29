@@ -87,7 +87,7 @@
 
         // CRIAR ESTAMPA COM CORTE MANUAL NA ALÇA
         // Comprimento 3.5 = Aproximadamente meia caneca + laterais (foge da alça)
-        const geo = new THREE.CylinderGeometry(size.x/2 * 1.02, size.x/2 * 1.02, size.y * 0.8, 64, 1, true, 2, 4);
+        const geo = new THREE.CylinderGeometry(size.x/2 * 1.02, size.x/2 * 1.02, size.y * 0.8, 64, 1, true, 2, 12);
         estampa = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ transparent: true, side: THREE.DoubleSide }));
         estampa.rotation.y = 3.14; 
         scene.add(estampa);
