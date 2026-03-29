@@ -65,7 +65,7 @@
     const loader = new THREE.GLTFLoader();
     
     // TENTATIVA DE CARREGAMENTO (Usando ./ para garantir que é na mesma pasta)
-    loader.load('./canecaaa.glb', function(gltf) {
+    loader.load('./aa.glb', function(gltf) {
         const model = gltf.scene;
         model.traverse((child) => {
             if (child.isMesh) {
