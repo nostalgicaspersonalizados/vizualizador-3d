@@ -3,39 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nostálgicas Studio - Mockup Profissional 3D</title>
+    <title>Nostálgicas Studio - Mockup Profissional v2</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/controls/OrbitControls.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
     
     <style>
-        :root { --bg-panel: #1a1a1a; --accent: #2ecc71; --text: #eee; }
+        /* ESTILO SUPER DESTACADO PARA NOSTÁLGICAS STUDIO */
+        :root { --bg-menu: #1a1a1a; --accent: #2ecc71; --text: #eee; }
         body { margin: 0; display: flex; height: 100vh; font-family: 'Segoe UI', sans-serif; background: #111; color: var(--text); overflow: hidden; }
+        
         #render-3d { flex: 1; background: radial-gradient(#ffffff, #dcdcdc); position: relative; cursor: move; }
         
-        #sidebar { width: 360px; background: var(--bg-panel); padding: 25px; border-left: 2px solid var(--accent); display: flex; flex-direction: column; box-shadow: -5px 0 20px rgba(0,0,0,0.5); overflow-y: auto; }
+        /* MENU LATERAL - NOVO E VERIFICADO */
+        #sidebar { width: 340px; background: var(--bg-menu); padding: 25px; border-left: 3px solid var(--accent); display: flex; flex-direction: column; box-shadow: -5px 0 20px rgba(0,0,0,0.5); overflow-y: auto; }
         
-        h2 { color: var(--accent); margin-top: 0; font-size: 22px; letter-spacing: 1px; text-transform: uppercase; border-bottom: 1px solid #333; padding-bottom: 10px; }
-        .subtitle { font-size: 11px; color: #888; margin-bottom: 20px; }
+        h2 { color: var(--accent); margin: 0 0 5px 0; font-size: 22px; text-transform: uppercase; letter-spacing: 1px; }
+        .subtitle { font-size: 11px; color: #888; margin-bottom: 20px; border-bottom: 1px solid #333; padding-bottom: 10px; }
         
         .canvas-container { background: #fff; border: 1px solid #444; margin-bottom: 20px; box-shadow: 0 4px 8px rgba(0,0,0,0.3); line-height: 0; }
         
-        .btn { width: 100%; padding: 14px; margin-bottom: 12px; cursor: pointer; font-weight: bold; border: none; text-transform: uppercase; border-radius: 6px; transition: 0.2s ease; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn { width: 100%; padding: 12px; margin-bottom: 10px; cursor: pointer; font-weight: bold; border: none; text-transform: uppercase; border-radius: 4px; transition: 0.2s ease; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-img { background: #333; color: #fff; border: 1px solid #555; font-size: 11px; }
+        .btn-img:hover { background: #444; }
         
-        .btn-img { background: #333; color: #fff; border: 1px solid #555; }
-        .btn-img:hover { background: #444; border-color: #777; }
-        
-        .btn-save { background: var(--accent); color: #fff; font-size: 15px; margin-top: 10px; }
+        .btn-save { background: var(--accent); color: #fff; font-size: 14px; margin-top: 15px; }
         .btn-save:hover { background: #27ae60; transform: translateY(-2px); }
         
-        .control-group { margin-top: 20px; border-top: 1px solid #333; padding-top: 15px; }
-        label { font-size: 10px; color: #aaa; display: block; margin-bottom: 8px; text-transform: uppercase; font-weight: bold; }
+        .control-group { margin-top: 15px; border-top: 1px solid #333; padding-top: 15px; }
+        label { font-size: 10px; color: #aaa; display: block; margin-bottom: 6px; text-transform: uppercase; font-weight: bold; }
         input[type="range"] { width: 100%; accent-color: var(--accent); cursor: pointer; margin-bottom: 15px; }
         
         .color-picker { display: flex; gap: 10px; margin-bottom: 20px; }
-        .color-btn { width: 35px; height: 35px; border-radius: 50%; border: 2px solid #555; cursor: pointer; transition: 0.2s; }
-        .color-btn:hover { transform: scale(1.1); border-color: #fff; }
+        .color-btn { width: 30px; height: 30px; border-radius: 50%; border: 2px solid #555; cursor: pointer; transition: 0.2s; }
         .color-btn.active { border-color: var(--accent); box-shadow: 0 0 10px var(--accent); }
     </style>
 </head>
@@ -44,25 +45,24 @@
 <div id="render-3d"></div>
 
 <aside id="sidebar">
-    <h2>NOSTÁLGICAS STUDIO</h2>
-    <div class="subtitle">Área de Sublimação: 22,5 x 9,5 cm | Caneca 325ml</div>
+    <h2>NOSTÁLGICAS</h2>
+    <div class="subtitle">Área de Sublimação: 22,5 x 9,5 cm</div>
     
     <div class="canvas-container">
         <canvas id="canvas2d" width="450" height="190" style="width: 100%; height: auto;"></canvas>
     </div>
 
     <input type="file" id="up-img" style="display:none" accept="image/*">
-    <button class="btn btn-img" onclick="document.getElementById('up-img').click()"><span>&#128247;</span> Inserir Arte / Foto</button>
-    <button class="btn btn-img" onclick="addText()" style="background:#222"><span>&#128221;</span> Adicionar Texto</button>
+    <button class="btn btn-img" onclick="document.getElementById('up-img').click()">Inserir Arte / Foto</button>
     
     <div class="control-group">
         <label>Cor do Interior e Alça</label>
         <div class="color-picker">
-            <div class="color-btn active" style="background:#ffffff" onclick="changeMugColor(this, '#ffffff')" title="Branco"></div>
-            <div class="color-btn" style="background:#111111" onclick="changeMugColor(this, '#111111')" title="Preto"></div>
-        </div>
+            <div class="color-btn active" style="background:#ffffff" onclick="changeMugColor(this, '#ffffff')"></div>
+            <div class="color-btn" style="background:#111111" onclick="changeMugColor(this, '#111111')"></div>
+            <div class="color-btn" style="background:#ff9999" onclick="changeMugColor(this, '#ff9999')"></div> </div>
 
-        <label>Ajuste da Estampa (Horizontal)</label>
+        <label>Girar Arte na Caneca</label>
         <input type="range" id="rot" min="-0.5" max="0.5" step="0.001" value="0">
         
         <label>Zoom (Distância)</label>
@@ -72,52 +72,44 @@
         <input type="range" id="cam-y" min="-1" max="4" step="0.1" value="1.2">
     </div>
 
-    <button class="btn btn-save" onclick="savePreview()"><span>&#128242;</span> Baixar Foto para Cliente</button>
+    <button class="btn btn-save" onclick="savePreview()">Baixar Foto para Cliente</button>
 </aside>
 
 <script>
-    // --- 1. EDITOR 2D (FABRIC.JS) ---
+    // --- 1. EDITOR 2D (FABRIC) ---
     const fCanvas = new fabric.Canvas('canvas2d', { backgroundColor: '#ffffff' });
-    
-    // Sincroniza o editor com o 3D em tempo real
     fCanvas.on('after:render', () => { if(texture) texture.needsUpdate = true; });
 
     // --- 2. SETUP 3D (THREE.JS) ---
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0xffffff);
-    
     const container = document.getElementById('render-3d');
     const camera = new THREE.PerspectiveCamera(40, container.clientWidth / container.clientHeight, 0.1, 1000);
-    camera.position.set(0, 1.2, 7); // Posição padrão equilibrada
+    
+    // Posição padrão da câmera
+    camera.position.set(0, 1.2, 7); 
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
     renderer.setSize(container.clientWidth, container.clientHeight);
     renderer.setPixelRatio(window.devicePixelRatio);
-    renderer.outputEncoding = THREE.sRGBEncoding; // Melhora a qualidade das cores
+    renderer.outputEncoding = THREE.sRGBEncoding; 
     container.appendChild(renderer.domElement);
 
-    // Controles de mouse (OrbitControls agora integrado com segurança)
+    // Controles de mouse
     const controls = new THREE.OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
-    controls.dampingFactor = 0.1;
     controls.minDistance = 4;
     controls.maxDistance = 15;
     controls.target.set(0, 0, 0);
 
-    // Iluminação Profissional de Estúdio (Para dar brilho de cerâmica)
-    scene.add(new THREE.AmbientLight(0xffffff, 1.0)); // Luz ambiente suave
-    
+    // Iluminação de Estúdio
+    scene.add(new THREE.AmbientLight(0xffffff, 1.0));
     const lightFront = new THREE.DirectionalLight(0xffffff, 0.6);
     lightFront.position.set(5, 8, 8);
     scene.add(lightFront);
 
-    const lightBack = new THREE.DirectionalLight(0xffffff, 0.3);
-    lightBack.position.set(-5, 3, -5);
-    scene.add(lightBack);
-
-    // --- 3. CONSTRUÇÃO DA CANECA (PROFISSIONAL VIA CÓDIGO) ---
+    // --- 3. CONSTRUÇÃO DA CANECA (CORRIGIDA) ---
     
-    // Textura para a área de sublimação
     const texture = new THREE.CanvasTexture(fCanvas.getElement());
     texture.encoding = THREE.sRGBEncoding;
     texture.wrapS = THREE.RepeatWrapping;
@@ -127,43 +119,40 @@
         map: texture, 
         color: 0xffffff, 
         shininess: 90,
-        specular: new THREE.Color(0x333333),
-        side: THREE.FrontSide // Importante: Arte só aparece do lado de fora
+        side: THREE.FrontSide // Arte só aparece do lado de fora
     });
 
-    // Material Interno e da Alça (Branco/Preto Liso)
-    let currentMugColor = '#ffffff';
+    // Material Interno (Branco/Preto/Rosa Liso)
     const matPlain = new THREE.MeshPhongMaterial({ 
-        color: currentMugColor, 
+        color: '#ffffff', 
         shininess: 100,
-        specular: new THREE.Color(0x555555),
         side: THREE.FrontSide
     });
 
-    // Grupo que contém todas as partes da caneca
     const mugGroup = new THREE.Group();
 
     // A. Corpo Externo (Cilindro com a arte)
-    // Usamos LatheGeometry para uma curvatura suave nas bordas
+    // CORREÇÃO: Pontos definidos de baixo para cima para não inverter a caneca
     const pointsExt = [];
     for (let i = 0; i <= 20; i++) {
-        // Define o perfil lateral: Vector2(raio, altura)
         pointsExt.push(new THREE.Vector2(1.1, (i - 10) * 0.125));
     }
     const geoExt = new THREE.LatheGeometry(pointsExt, 64);
     const mugExt = new THREE.Mesh(geoExt, matExt);
+    
+    // CORREÇÃO: Garante que a caneca não nasça de cabeça para baixo
+    mugExt.rotation.x = 0; 
     mugGroup.add(mugExt);
 
     // B. Corpo Interno (Cilindro Liso)
     const pointsInt = [];
-    for (let i = 0; i <= 20; i++) {
-        // Um pouco menor para dar espessura à parede
+    for (let i = 0; i <= 19; i++) {
         pointsInt.push(new THREE.Vector2(1.05, (i - 10) * 0.12));
     }
     const geoInt = new THREE.LatheGeometry(pointsInt, 64);
     const mugInt = new THREE.Mesh(geoInt, matPlain);
     mugInt.rotation.x = Math.PI; // Inverte para as faces ficarem para dentro
-    mugInt.position.y = 0.05; // Levanta um pouco para não bater no fundo
+    mugInt.position.y = 0.05; 
     mugGroup.add(mugInt);
 
     // C. Borda Superior (Fecha o topo)
@@ -189,56 +178,36 @@
 
     scene.add(mugGroup);
 
-    // --- 4. FUNÇÕES DE INTERAÇÃO ---
+    // --- 4. FUNÇÕES DE INTERAÇÃO (NOVAS E VERIFICADAS) ---
     
-    // Adicionar Texto ao Editor
-    window.addText = () => {
-        const text = new fabric.IText('Nostálgicas', {
-            left: 100, top: 70, fontSize: 30, fontFamily: 'Arial', fill: '#333'
-        });
-        fCanvas.add(text);
-        fCanvas.setActiveObject(text);
-    };
-
-    // Upload de Imagem
     document.getElementById('up-img').onchange = (e) => {
         const reader = new FileReader();
-        reader.onload = (f) => {
-            fabric.Image.fromURL(f.target.result, (img) => {
-                // Ajusta o tamanho inicial da imagem
-                if(img.width > img.height) { img.scaleToWidth(200); } 
-                else { img.scaleToHeight(150); }
-                fCanvas.add(img).centerObject(img);
-            });
-        };
+        reader.onload = (f) => fabric.Image.fromURL(f.target.result, (img) => {
+            if(img.width > img.height) { img.scaleToWidth(200); } 
+            else { img.scaleToHeight(150); }
+            fCanvas.add(img).centerObject(img);
+        });
         reader.readAsDataURL(e.target.files[0]);
     };
 
-    // Mudar cor do interior e alça
+    // Mudar cor do interior, alça e fundo
     window.changeMugColor = (btn, color) => {
-        currentMugColor = color;
         matPlain.color.set(color);
-        
-        // Atualiza a classe ativa nos botões
         document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
     };
 
-    // Salvar Foto (Download do Renderer 3D)
     window.savePreview = () => {
-        // Desativa a seleção do Fabric para não sair na foto
-        fCanvas.discardActiveObject(); 
-        fCanvas.renderAll();
-        
+        fCanvas.discardActiveObject(); fCanvas.renderAll();
         setTimeout(() => {
             const link = document.createElement('a');
-            link.download = 'Mockup_Nostalgicas_3D.png';
+            link.download = 'Mockup_Nostalgicas.png';
             link.href = renderer.domElement.toDataURL('image/png');
             link.click();
         }, 150);
     };
 
-    // Atualização dos Sliders no Menu Lateral
+    // Atualização dos Sliders no Menu Lateral (NOVOS CONTROLES)
     document.getElementById('rot').oninput = (e) => texture.offset.x = parseFloat(e.target.value);
     
     document.getElementById('zoom').oninput = (e) => camera.position.z = parseFloat(e.target.value);
@@ -248,23 +217,17 @@
         camera.lookAt(new THREE.Vector3(0, 0, 0)); // Mantém o foco no centro da caneca
     };
 
-    // Loop de Animação
     function animate() {
         requestAnimationFrame(animate);
-        controls.update(); // Necessário para o damping (movimento suave)
+        controls.update(); 
         renderer.render(scene, camera);
     }
     animate();
 
-    // Ajuste de Redimensionamento da Janela
     window.addEventListener('resize', () => {
-        const newWidth = container.clientWidth;
-        const newHeight = container.clientHeight;
-        
-        camera.aspect = newWidth / newHeight;
+        camera.aspect = container.clientWidth / container.clientHeight;
         camera.updateProjectionMatrix();
-        
-        renderer.setSize(newWidth, newHeight);
+        renderer.setSize(container.clientWidth, container.clientHeight);
     });
 </script>
 </body>
