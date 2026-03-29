@@ -33,7 +33,7 @@
 <aside id="sidebar">
     <div class="canvas-area">
         <span class="dim-label">Área de Impressão: 225 x 95 mm</span>
-        <canvas id="canvas2d" width="340" height="143"></canvas>
+        <canvas id="canvas2d" width="450" height="190"></canvas>
     </div>
 
     <div class="button-grid">
@@ -58,8 +58,12 @@
     import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
     import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
-    // 1. FABRIC.JS - Configurado para 22.5 x 9.5
-    const fCanvas = new fabric.Canvas('canvas2d', { backgroundColor: '#fff' });
+    // 1. FABRIC.JS - Otimizado para 225x95 (Escala 2x para melhor definição)
+    const fCanvas = new fabric.Canvas('canvas2d', { 
+        backgroundColor: null, // Transparente para não pintar o interior
+        preserveObjectStacking: true 
+    });
+    
     fCanvas.on('after:render', () => { if(texture3d) texture3d.needsUpdate = true; });
 
     // 2. THREE.JS SETUP
@@ -75,89 +79,96 @@
     document.getElementById('render-3d').appendChild(renderer.domElement);
 
     const controls = new OrbitControls(camera, renderer.domElement);
-    scene.add(new THREE.AmbientLight(0xffffff, 1.8));
-    const light = new THREE.DirectionalLight(0xffffff, 1);
-    light.position.set(5, 5, 5);
+    scene.add(new THREE.AmbientLight(0xffffff, 1.2));
+    const light = new THREE.DirectionalLight(0xffffff, 0.8);
+    light.position.set(5, 10, 7);
     scene.add(light);
 
-    // 3. TEXTURA E SHADER (BLOQUEIO DE INTERIOR)
+    // 3. TEXTURA E SHADER MELHORADO
     const texture3d = new THREE.CanvasTexture(fCanvas.getElement());
     texture3d.colorSpace = THREE.SRGBColorSpace;
-    // ClampToEdge impede que a arte se repita no fundo ou interior
     texture3d.wrapS = texture3d.wrapT = THREE.ClampToEdgeWrapping;
 
     const shaderMaterial = new THREE.ShaderMaterial({
         uniforms: { 
             map: { value: texture3d }, 
-            color: { value: new THREE.Color(0xffffff) } 
+            mugColor: { value: new THREE.Color(0xffffff) } 
         },
         vertexShader: `
             varying vec2 vUv;
+            varying vec3 vNormal;
             void main() {
                 vUv = uv;
+                vNormal = normalize(normalMatrix * normal);
                 gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
             }
         `,
         fragmentShader: `
             uniform sampler2D map;
-            uniform vec3 color;
+            uniform vec3 mugColor;
             varying vec2 vUv;
+            varying vec3 vNormal;
             void main() {
                 vec4 tex = texture2D(map, vUv);
-                // gl_FrontFacing identifica a face externa da malha
-                if (gl_FrontFacing) {
-                    gl_FragColor = mix(vec4(color, 1.0), tex, tex.a);
+                
+                // Lógica: Se estiver na frente (gl_FrontFacing) e UV for válido
+                if (gl_FrontFacing && vUv.x >= 0.0 && vUv.x <= 1.0 && vUv.y >= 0.0 && vUv.y <= 1.0) {
+                    // Mix da cor da caneca com a textura (respeitando o alpha da arte)
+                    gl_FragColor = vec4(mix(mugColor, tex.rgb, tex.a), 1.0);
                 } else {
-                    gl_FragColor = vec4(color, 1.0); // Interior sempre branco puro
+                    gl_FragColor = vec4(mugColor, 1.0); // Fundo e interior branco
                 }
             }
         `,
         side: THREE.DoubleSide
     });
 
-    // 4. CARREGAR MUG.OBJ DO GITHUB
+    // 4. CARREGAR MUG.OBJ
     const loader = new OBJLoader();
     loader.load('mug.obj', (obj) => {
         const mesh = obj.children[0];
         obj.scale.set(50, 50, 50);
         
-        // Centralização
         const box = new THREE.Box3().setFromObject(obj);
         const center = box.getCenter(new THREE.Vector3());
         obj.position.sub(center);
 
-        // MAPEAMENTO UV PARA 22.5cm (Envolve a caneca quase toda)
         const geo = mesh.geometry;
         geo.computeBoundingBox();
         const uv = geo.attributes.uv;
         const pos = geo.attributes.position;
         
         for (let i = 0; i < pos.count; i++) {
-            // A matemática abaixo projeta a arte exatamente na frente e laterais
-            // O divisor 1.6 ajusta a largura para os 22.5cm sem encostar na alça
-            let u = Math.atan2(pos.getX(i), pos.getZ(i)) / (Math.PI * 1.6) + 0.5;
+            // MATEMÁTICA UV PRECISA:
+            // 1.58 é o fator para os 22.5cm em uma caneca padrão de 8cm diâmetro
+            let u = Math.atan2(pos.getX(i), pos.getZ(i)) / (Math.PI * 1.58) + 0.5;
             let v = (pos.getY(i) - geo.boundingBox.min.y) / (geo.boundingBox.max.y - geo.boundingBox.min.y);
+            
+            // Filtro: Se a posição Z for negativa (fundo da caneca/alça), jogamos o UV para fora
+            // Isso garante que a arte não apareça atrás da alça
+            if (pos.getZ(i) < -0.01) { u = -1.0; } 
+
             uv.setXY(i, u, v);
         }
 
         mesh.material = shaderMaterial;
         scene.add(obj);
-    }, undefined, (err) => {
-        console.error(err);
-        alert("Certifique-side de que o arquivo 'mug.obj' está na raiz do seu GitHub!");
     });
 
-    // 5. FUNÇÕES DE INTERFACE
+    // 5. FUNÇÕES
     window.addText = () => {
-        fCanvas.add(new fabric.IText('Nostálgicas', {
-            left: 100, top: 50, fontSize: 30, fontFamily: 'Arial', fill: '#333'
-        }));
+        const text = new fabric.IText('Nostálgicas', {
+            left: 150, top: 70, fontSize: 40, fontFamily: 'Arial', fill: '#333'
+        });
+        fCanvas.add(text);
+        fCanvas.setActiveObject(text);
     };
 
     document.getElementById('up-img').onchange = (e) => {
         const r = new FileReader();
         r.onload = (f) => fabric.Image.fromURL(f.target.result, (img) => {
-            img.scaleToWidth(150); fCanvas.add(img).centerObject(img);
+            img.scaleToWidth(200);
+            fCanvas.add(img).centerObject(img);
         });
         r.readAsDataURL(e.target.files[0]);
     };
@@ -166,8 +177,8 @@
         fCanvas.discardActiveObject(); fCanvas.renderAll();
         setTimeout(() => {
             const a = document.createElement('a');
-            a.download = 'Mockup_Nostalgicas.png';
-            a.href = renderer.domElement.toDataURL();
+            a.download = 'Nostalgicas_Preview.png';
+            a.href = renderer.domElement.toDataURL('image/png');
             a.click();
         }, 100);
     };
@@ -175,8 +186,18 @@
     document.getElementById('rot').oninput = (e) => texture3d.offset.x = parseFloat(e.target.value);
     document.getElementById('cam-z').oninput = (e) => camera.position.z = e.target.value;
 
-    function animate() { requestAnimationFrame(animate); controls.update(); renderer.render(scene, camera); }
+    function animate() { 
+        requestAnimationFrame(animate); 
+        controls.update(); 
+        renderer.render(scene, camera); 
+    }
     animate();
+
+    window.addEventListener('resize', () => {
+        camera.aspect = (window.innerWidth - 380) / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth - 380, window.innerHeight);
+    });
 </script>
 </body>
 </html>
