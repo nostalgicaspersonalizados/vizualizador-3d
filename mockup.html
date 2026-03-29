@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nostálgicas Studio - Estável</title>
+    <title>Nostálgicas Studio - Sistema Nativo</title>
     <script type="importmap">
       { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js", "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/" } }
     </script>
@@ -41,21 +41,22 @@
     </div>
 
     <div class="controls">
-        <label style="font-size: 10px; color: #888;">AJUSTE LATERAL</label>
+        <label style="font-size: 10px; color: #aaa;">GIRAR ARTE (HORIZONTAL)</label>
         <input type="range" id="rot" min="-0.5" max="0.5" step="0.001" value="0">
-        <label style="font-size: 10px; color: #888;">ZOOM</label>
+        <label style="font-size: 10px; color: #aaa;">ZOOM</label>
         <input type="range" id="cam-z" min="3" max="10" step="0.1" value="6">
     </div>
 </aside>
 
 <script type="module">
     import * as THREE from 'three';
-    import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
     import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
+    // 1. FABRIC.JS (Editor 2D)
     const fCanvas = new fabric.Canvas('canvas2d', { backgroundColor: '#fff' });
     fCanvas.on('after:render', () => { if(texture3d) texture3d.needsUpdate = true; });
 
+    // 2. THREE.JS (Visualização 3D)
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0xffffff);
     const camera = new THREE.PerspectiveCamera(40, (window.innerWidth - 380) / window.innerHeight, 0.1, 1000);
@@ -63,6 +64,7 @@
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
     renderer.setSize(window.innerWidth - 380, window.innerHeight);
+    renderer.setPixelRatio(window.devicePixelRatio);
     document.getElementById('render-3d').appendChild(renderer.domElement);
 
     const controls = new OrbitControls(camera, renderer.domElement);
@@ -71,59 +73,57 @@
     light.position.set(5, 5, 5);
     scene.add(light);
 
+    // 3. TEXTURA E SHADER PARA ÁREA DE 22,5cm
     const texture3d = new THREE.CanvasTexture(fCanvas.getElement());
     texture3d.colorSpace = THREE.SRGBColorSpace;
-    texture3d.wrapS = texture3d.wrapT = THREE.ClampToEdgeWrapping;
+    texture3d.wrapS = THREE.ClampToEdgeWrapping; 
+    texture3d.wrapT = THREE.ClampToEdgeWrapping;
 
-    const mat = new THREE.ShaderMaterial({
-        uniforms: { map: { value: texture3d }, mugColor: { value: new THREE.Color(0xffffff) } },
-        vertexShader: `varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }`,
-        fragmentShader: `
-            uniform sampler2D map; uniform vec3 mugColor; varying vec2 vUv;
-            void main() {
-                vec4 tex = texture2D(map, vUv);
-                if (gl_FrontFacing && vUv.x >= 0.0 && vUv.x <= 1.0) {
-                    gl_FragColor = vec4(mix(mugColor, tex.rgb, tex.a), 1.0);
-                } else {
-                    gl_FragColor = vec4(mugColor, 1.0);
-                }
-            }
-        `,
-        side: THREE.DoubleSide
+    const mat = new THREE.MeshPhongMaterial({
+        color: 0xffffff,
+        map: texture3d,
+        side: THREE.FrontSide, // Garante que não apareça por dentro
+        shininess: 80
     });
 
-    // TENTAR CARREGAR OBJ, SE FALHAR, USA CILINDRO
-    const loader = new OBJLoader();
-    loader.load('mug.obj', (obj) => {
-        const mesh = obj.children[0];
-        obj.scale.set(50, 50, 50);
-        const box = new THREE.Box3().setFromObject(obj);
-        obj.position.sub(box.getCenter(new THREE.Vector3()));
+    // 4. CONSTRUÇÃO DA CANECA (Sem arquivos externos!)
+    // Corpo da caneca (Cilindro)
+    const geometry = new THREE.CylinderGeometry(1, 1, 2.2, 64, 1, true);
+    
+    // Ajuste do Mapeamento UV para cobrir 22,5cm (deixa espaço para a alça)
+    const uv = geometry.attributes.uv;
+    for (let i = 0; i < uv.count; i++) {
+        let u = uv.getX(i);
+        // Ajusta a escala horizontal para os 22.5cm
+        uv.setX(i, u * 1.1 - 0.05); 
+    }
 
-        const geo = mesh.geometry;
-        geo.computeBoundingBox();
-        const uv = geo.attributes.uv;
-        const pos = geo.attributes.position;
-        for (let i = 0; i < pos.count; i++) {
-            let u = Math.atan2(pos.getX(i), pos.getZ(i)) / (Math.PI * 1.55) + 0.5;
-            let v = (pos.getY(i) - geo.boundingBox.min.y) / (geo.boundingBox.max.y - geo.boundingBox.min.y);
-            if (pos.getZ(i) < -0.02) u = -1.0; 
-            uv.setXY(i, u, v);
-        }
-        mesh.material = mat;
-        scene.add(obj);
-    }, undefined, () => {
-        console.warn("Arquivo mug.obj não encontrado. Usando modelo de emergência.");
-        const geometry = new THREE.CylinderGeometry(1, 1, 2.2, 64, 1, true);
-        const backupMug = new THREE.Mesh(geometry, mat);
-        scene.add(backupMug);
-        // Adiciona uma alça simples
-        const handle = new THREE.Mesh(new THREE.TorusGeometry(0.6, 0.1, 16, 32, Math.PI), new THREE.MeshPhongMaterial({color:0xffffff}));
-        handle.position.set(1, 0, 0); handle.rotation.z = -Math.PI/2;
-        scene.add(handle);
-    });
+    const canecaCorpo = new THREE.Mesh(geometry, mat);
+    scene.add(canecaCorpo);
 
-    window.addText = () => { fCanvas.add(new fabric.IText('Texto', {left: 100, top: 50})); };
+    // Interior da caneca (Cilindro sem textura)
+    const interiorGeo = new THREE.CylinderGeometry(0.95, 0.95, 2.15, 64, 1, true);
+    const interiorMat = new THREE.MeshPhongMaterial({ color: 0xffffff });
+    const interior = new THREE.Mesh(interiorGeo, interiorMat);
+    interior.rotation.x = Math.PI; // Inverte para as faces ficarem para dentro
+    scene.add(interior);
+
+    // Fundo da caneca
+    const fundoGeo = new THREE.CircleGeometry(1, 64);
+    const fundo = new THREE.Mesh(fundoGeo, interiorMat);
+    fundo.rotation.x = Math.PI / 2;
+    fundo.position.y = -1.1;
+    scene.add(fundo);
+
+    // Alça (Torus)
+    const alcaGeo = new THREE.TorusGeometry(0.6, 0.12, 16, 32, Math.PI);
+    const alca = new THREE.Mesh(alcaGeo, interiorMat);
+    alca.position.set(1, 0, 0);
+    alca.rotation.z = -Math.PI / 2;
+    scene.add(alca);
+
+    // 5. FUNÇÕES
+    window.addText = () => { fCanvas.add(new fabric.IText('Nostálgicas', {left: 150, top: 70, fontSize: 30})); };
     document.getElementById('up-img').onchange = (e) => {
         const r = new FileReader();
         r.onload = (f) => fabric.Image.fromURL(f.target.result, (img) => {
@@ -134,12 +134,14 @@
     window.takePhoto = () => {
         fCanvas.discardActiveObject(); fCanvas.renderAll();
         setTimeout(() => {
-            const a = document.createElement('a'); a.download = 'Mockup.png';
+            const a = document.createElement('a'); a.download = 'Preview_Nostalgicas.png';
             a.href = renderer.domElement.toDataURL(); a.click();
         }, 100);
     };
+
     document.getElementById('rot').oninput = (e) => texture3d.offset.x = parseFloat(e.target.value);
     document.getElementById('cam-z').oninput = (e) => camera.position.z = e.target.value;
+
     function animate() { requestAnimationFrame(animate); controls.update(); renderer.render(scene, camera); }
     animate();
 </script>
