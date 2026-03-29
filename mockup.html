@@ -101,5 +101,24 @@
         });
         scene.add(caneca);
 
-        // Criar Estampa
-        const raio = (size.x / 2) *
+       // Criar Estampa
+const raio = (size.x / 2) * 1.02; 
+const altura = size.y * 0.85;
+
+// AJUSTE MANUAL AQUI:
+// O número 3.5 é o comprimento da estampa. 
+// Se diminuir para 3.0, a estampa fica mais curta e longe da alça.
+// O número -1.75 deve ser sempre a metade negativa do anterior para centralizar.
+const comprimentoManual = 3.5; 
+const inicioManual = -(comprimentoManual / 2);
+
+const geo = new THREE.CylinderGeometry(raio, raio, altura, 64, 1, true, inicioManual, comprimentoManual);
+
+estampa = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ 
+    transparent: true, 
+    side: THREE.DoubleSide,
+    polygonOffset: true, 
+    polygonOffsetFactor: -1 
+}));
+estampa.rotation.y = 3.14; 
+scene.add(estampa);
