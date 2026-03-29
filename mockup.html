@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Nostálgicas Studio - Versão Final de Sucesso</title>
+    <title>Nostálgicas Studio - Controle Manual</title>
     <script type="importmap">
       { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js", "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/" } }
     </script>
@@ -10,26 +10,42 @@
     <style>
         body { margin: 0; display: flex; height: 100vh; font-family: sans-serif; background: #1a1a1a; overflow: hidden; }
         #render-3d { flex: 1; background: #fff; }
-        #controles { width: 350px; background: #ffffff; border-left: 3px solid #3376e3; padding: 20px; box-shadow: -10px 0 20px rgba(0,0,0,0.2); z-index: 10; display: flex; flex-direction: column; }
+        #sidebar { width: 350px; background: #ffffff; border-left: 3px solid #3376e3; padding: 20px; box-shadow: -10px 0 20px rgba(0,0,0,0.2); z-index: 10; display: flex; flex-direction: column; overflow-y: auto; }
         .canvas-container { border: 2px solid #3376e3; margin: 15px 0; background: #fdfdfd; border-radius: 5px; }
         .btn { background: #3376e3; color: white; border: none; padding: 15px; width: 100%; font-weight: bold; cursor: pointer; border-radius: 5px; text-transform: uppercase; }
-        .btn-limpar { background: #4a5568; margin-top: 10px; padding: 10px; }
-        h2 { color: #333; margin-top: 0; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        .btn-limpar { background: #4a5568; margin-top: 10px; padding: 10px; color: white; border: none; width: 100%; border-radius: 5px; cursor: pointer; }
+        .controles-manuais { margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px; }
+        label { font-size: 12px; font-weight: bold; display: block; margin-top: 10px; color: #333; }
+        input[type="range"] { width: 100%; cursor: pointer; }
+        h2 { color: #333; margin-top: 0; font-size: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
     </style>
 </head>
 <body>
 
-<div style="margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px;">
-    <label style="font-size: 12px; font-weight: bold;">Girar Estampa (Horizontal)</label>
-    <input type="range" id="rotacao" min="0" max="6.28" step="0.01" value="3.14" style="width:100%">
+<div id="render-3d"></div>
+
+<aside id="sidebar">
+    <h2>Nostálgicas Studio</h2>
     
-    <label style="font-size: 12px; font-weight: bold; margin-top: 10px; display: block;">Altura (Vertical)</label>
-    <input type="range" id="altura" min="-0.5" max="0.5" step="0.01" value="0" style="width:100%">
-    
-    <label style="font-size: 12px; font-weight: bold; margin-top: 10px; display: block;">Tamanho (Zoom)</label>
-    <input type="range" id="zoom" min="0.5" max="1.5" step="0.01" value="1.0" style="width:100%">
-</div>
-    <button class="btn btn-limpar" onclick="limparAjustes()">✔️ FINALIZAR (Limpar bordas)</button>
+    <input type="file" id="input-imagem" style="display:none" accept="image/*">
+    <button class="btn" onclick="document.getElementById('input-imagem').click()">📂 CARREGAR ARTE</button>
+
+    <div class="canvas-container">
+        <canvas id="editor-2d" width="310" height="140"></canvas>
+    </div>
+
+    <div class="controles-manuais">
+        <label>Girar Estampa (Horizontal)</label>
+        <input type="range" id="rotacao" min="0" max="6.28" step="0.01" value="3.14">
+        
+        <label>Altura (Vertical)</label>
+        <input type="range" id="altura" min="-2" max="2" step="0.01" value="0">
+        
+        <label>Tamanho (Zoom)</label>
+        <input type="range" id="zoom" min="0.5" max="1.5" step="0.01" value="1.0">
+    </div>
+
+    <button class="btn-limpar" onclick="limparAjustes()">✔️ FINALIZAR (Limpar bordas)</button>
 </aside>
 
 <script type="module">
@@ -39,7 +55,7 @@
 
     let scene, camera, renderer, controls, caneca, estampa, fCanvas;
 
-    // --- 1. EDITOR 2D (FABRIC.JS) ---
+    // 1. EDITOR 2D
     fCanvas = new fabric.Canvas('editor-2d', { backgroundColor: '#ffffff' });
     
     window.limparAjustes = () => {
@@ -55,12 +71,12 @@
         estampa.material.needsUpdate = true;
     });
 
-    // --- 2. AMBIENTE 3D ---
+    // 2. AMBIENTE 3D
     scene = new THREE.Scene();
     scene.background = new THREE.Color(0xffffff);
 
     camera = new THREE.PerspectiveCamera(45, (window.innerWidth - 350) / window.innerHeight, 0.1, 1000);
-    camera.position.set(0, 0, 10); // Câmera posicionada para ver objetos maiores
+    camera.position.set(0, 0, 10);
 
     renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth - 350, window.innerHeight);
@@ -69,85 +85,21 @@
     controls = new OrbitControls(camera, renderer.domElement);
     scene.add(new THREE.AmbientLight(0xffffff, 2));
 
-    // --- 3. CARREGAR MUG.OBJ (COM AJUSTE DE ESCALA) ---
+    // 3. CARREGAR CANECA
     new OBJLoader().load('mug.obj', (obj) => {
         caneca = obj;
-
-        // AJUSTE DE ESCALA: Se a caneca for minúscula, nós forçamos ela a crescer 50x
         caneca.scale.set(50, 50, 50); 
 
         const box = new THREE.Box3().setFromObject(caneca);
         const center = box.getCenter(new THREE.Vector3());
         const size = box.getSize(new THREE.Vector3());
         
-        caneca.position.sub(center); // Centraliza no mundo
+        caneca.position.sub(center);
 
         caneca.traverse(c => {
             if (c.isMesh) c.material = new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: 0.1 });
         });
         scene.add(caneca);
 
-        // Criar Estampa (Protegendo a alça)
-        const raio = (size.x / 2) * 1.02;
-        const altura = size.y * 0.85;
-        const geo = new THREE.CylinderGeometry(raio, raio, altura, 64, 1, true, -2.2, 4.4);
-        
-        estampa = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ 
-            transparent: true, 
-            side: THREE.DoubleSide,
-            polygonOffset: true, 
-            polygonOffsetFactor: -1 
-        }));
-        estampa.rotation.y = Math.PI;
-        scene.add(estampa);
-
-        // Câmera foca no tamanho final da caneca
-        camera.position.z = size.z * 2.5;
-        controls.update();
-    });
-
-    // --- 4. CARREGAR IMAGEM ---
-    document.getElementById('input-imagem').onchange = (e) => {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-            fabric.Image.fromURL(event.target.result, (img) => {
-                img.scaleToWidth(150);
-                fCanvas.add(img);
-                fCanvas.centerObject(img);
-                fCanvas.setActiveObject(img);
-            });
-        };
-        reader.readAsDataURL(e.target.files[0]);
-    };
-
-    function animate() {
-        requestAnimationFrame(animate);
-        controls.update();
-        renderer.render(scene, camera);
-    }
-    animate();
-</script>// --- CONTROLES MANUAIS ---
-
-// 1. Controle de Rotação (Girar em volta da caneca)
-document.getElementById('rotacao').addEventListener('input', (e) => {
-    if (estampa) {
-        estampa.rotation.y = parseFloat(e.target.value);
-    }
-});
-
-// 2. Controle de Altura (Subir ou descer)
-document.getElementById('altura').addEventListener('input', (e) => {
-    if (estampa) {
-        estampa.position.y = parseFloat(e.target.value);
-    }
-});
-
-// 3. Controle de Zoom (Aumentar ou diminuir a malha da estampa)
-document.getElementById('zoom').addEventListener('input', (e) => {
-    if (estampa) {
-        const s = parseFloat(e.target.value);
-        estampa.scale.set(s, s, s);
-    }
-});
-</body>
-</html>
+        // Criar Estampa
+        const raio = (size.x / 2) *
