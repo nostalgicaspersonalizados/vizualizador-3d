@@ -3,26 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nostálgicas Studio - Restaurado</title>
+    <title>Nostálgicas Studio - Estúdio Profissional</title>
     <script type="importmap">
       { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js", "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/" } }
     </script>
     <script src="https://unpkg.com/fabric@5.3.0/dist/fabric.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --primary: #222; --accent: #ffffff; --panel: #333; }
+        :root { --primary: #333; --accent: #fff; --panel: #2a2a2a; --border: #444; }
         body { margin: 0; display: flex; height: 100vh; font-family: 'Segoe UI', sans-serif; background: #1a1a1a; color: white; overflow: hidden; }
-        #render-3d { flex: 1; background: #ffffff; }
-        #sidebar { width: 380px; background: var(--panel); padding: 20px; border-left: 1px solid #444; display: flex; flex-direction: column; }
-        .dim-text { font-size: 13px; margin-bottom: 10px; color: #ccc; }
-        .canvas-area { background: #444; padding: 5px; border: 1px solid #555; margin-bottom: 20px; }
-        .button-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .btn { background: transparent; color: white; border: 2px solid white; padding: 12px; cursor: pointer; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 12px; }
-        .btn:hover { background: rgba(255,255,255,0.1); }
-        .btn-full { grid-column: span 2; }
-        .controls { margin-top: 20px; border-top: 1px solid #555; padding-top: 20px; }
-        label { font-size: 11px; text-transform: uppercase; color: #888; display: block; margin-bottom: 5px; }
-        input[type="range"] { width: 100%; margin-bottom: 15px; accent-color: white; }
+        
+        /* Renderizador 3D */
+        #render-3d { flex: 1; background: #eee; }
+
+        /* Barra Lateral */
+        #sidebar { width: 380px; background: var(--panel); border-left: 1px solid var(--border); padding: 20px; display: flex; flex-direction: column; overflow-y: auto; box-shadow: -10px 0 20px rgba(0,0,0,0.2); }
+        
+        .header-info { margin-bottom: 15px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+        .header-info h3 { margin: 0; font-size: 16px; color: #aaa; text-transform: uppercase; letter-spacing: 1px; }
+        .dim-text { font-size: 12px; color: #999; margin-top: 5px; }
+
+        /* Área do Canvas */
+        .canvas-area { background: #3d3d3d; padding: 5px; border: 1px solid var(--border); margin-bottom: 20px; border-radius: 4px; }
+        
+        /* Grade de Botões Profissional */
+        .button-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+        .btn { 
+            background: transparent; color: white; border: 2px solid #666; padding: 12px 5px; 
+            font-size: 12px; font-weight: 600; cursor: pointer; display: flex; 
+            align-items: center; justify-content: center; gap: 8px; text-transform: uppercase;
+            transition: 0.3s;
+        }
+        .btn:hover { border-color: white; background: rgba(255,255,255,0.05); }
+        .btn-success { background: #2f855a; border: none; grid-column: span 2; }
+        .btn-success:hover { background: #276f4a; }
+
+        /* Controles */
+        .controls { margin-top: 15px; border-top: 1px solid var(--border); padding-top: 15px; }
+        label { font-size: 11px; text-transform: uppercase; color: #aaa; display: block; margin-bottom: 5px; }
+        input[type="range"] { width: 100%; margin-bottom: 15px; accent-color: white; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -30,24 +49,28 @@
 <div id="render-3d"></div>
 
 <aside id="sidebar">
-    <div class="dim-text">Dimensões do layout (mm): 210 x 95</div>
+    <div class="header-info">
+        <h3>Nostálgicas Studio Pro</h3>
+        <div class="dim-text"><i class="fa-solid fa-ruler"></i> Área de Impressão: 210 x 95mm</div>
+    </div>
+    
     <div class="canvas-area">
         <canvas id="canvas2d" width="340" height="155"></canvas>
     </div>
 
     <div class="button-grid">
         <input type="file" id="up-img" style="display:none" accept="image/*">
-        <button class="btn" onclick="document.getElementById('up-img').click()"><i class="fa-regular fa-image"></i> Imagem</button>
-        <button class="btn" onclick="addText()"><i class="fa-solid fa-font"></i> Texto</button>
-        <button class="btn" onclick="takePhoto()"><i class="fa-solid fa-camera"></i> Foto 3D</button>
-        <button class="btn" onclick="downloadLayout()"><i class="fa-solid fa-download"></i> Layout</button>
-        <button class="btn btn-full"><i class="fa-solid fa-video"></i> Renderização de Vídeo</button>
+        <button class="btn" onclick="document.getElementById('up-img').click()"><i class="fa-regular fa-image"></i> IMAGEM</button>
+        <button class="btn" onclick="addText()"><i class="fa-solid fa-font"></i> TEXTO</button>
+        <button class="btn" onclick="downloadLayout()"><i class="fa-solid fa-download"></i> LAYOUT</button>
+        <button class="btn" onclick="resetView()"><i class="fa-solid fa-rotate-left"></i> RESETAR LUZ</button>
+        <button class="btn btn-success" onclick="takePhoto()"><i class="fa-solid fa-camera"></i> SALVAR FOTO PARA CLIENTE</button>
     </div>
 
     <div class="controls">
         <label>Girar Arte na Frente</label>
         <input type="range" id="rot" min="-0.5" max="0.5" step="0.001" value="0">
-        <label>Zoom da Caneca</label>
+        <label>Zoom da Câmera</label>
         <input type="range" id="cam-z" min="3" max="10" step="0.1" value="6">
     </div>
 </aside>
@@ -56,32 +79,49 @@
     import * as THREE from 'three';
     import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
     import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
 
-    // 1. Setup Canvas 2D (Fabric)
-    const fCanvas = new fabric.Canvas('canvas2d', { backgroundColor: '#fff' });
+    // --- 1. SETUP CANVAS 2D (FABRIC.JS) ---
+    const fCanvas = new fabric.Canvas('canvas2d', { backgroundColor: '#ffffff' });
     fCanvas.on('after:render', () => { if(texture3d) texture3d.needsUpdate = true; });
 
-    // 2. Setup Three.js
+    window.addText = () => {
+        const text = new fabric.IText('Nostálgicas', {left: 50, top: 50, fontSize: 30, fontFamily: 'Arial'});
+        fCanvas.add(text); fCanvas.setActiveObject(text);
+    };
+
+    // --- 2. SETUP THREE.JS COM AMBIENTE REALISTA ---
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0xffffff);
-    const camera = new THREE.PerspectiveCamera(45, (window.innerWidth - 380) / window.innerHeight, 0.1, 1000);
+    scene.background = new THREE.Color(0xf0f0f0); // Fundo suave para o mockup
+
+    const camera = new THREE.PerspectiveCamera(40, (window.innerWidth - 380) / window.innerHeight, 0.1, 1000);
     camera.position.set(0, 0, 6);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
     renderer.setSize(window.innerWidth - 380, window.innerHeight);
+    renderer.setPixelRatio(window.devicePixelRatio); // Qualidade para telas Retina/4K
+    renderer.toneMapping = THREE.ACESFilmicToneMapping; // Mapeamento de cor profissional
+    renderer.toneMappingExposure = 1.2; // Ajuste fino da exposição da luz
     document.getElementById('render-3d').appendChild(renderer.domElement);
 
     const controls = new OrbitControls(camera, renderer.domElement);
-    scene.add(new THREE.AmbientLight(0xffffff, 2.0));
-    const light = new THREE.DirectionalLight(0xffffff, 1);
-    light.position.set(5,5,5);
-    scene.add(light);
+    controls.enableDamping = true; // Movimento suave da câmera
 
-    // 3. Textura e Shader (Correção de visibilidade)
+    // --- 3. CONFIGURAR ILUMINAÇÃO DE AMBIENTE (HDRI) ---
+    // Usamos um estúdio fotográfico neutro pré-carregado do Three.js para garantir que funcione
+    const pmremGenerator = new THREE.PMREMGenerator(renderer);
+    pmremGenerator.compileEquirectangularShader();
+
+    // Carregamos um ambiente de estúdio neutro padrão
+    scene.environment = pmremGenerator.fromScene(new THREE.Scene().add(new THREE.PointLight(0xffffff, 1))).texture;
+    scene.add(new THREE.AmbientLight(0xffffff, 1.5)); // Luz de preenchimento suave
+
+    // --- 4. TEXTURA E SHADER (Arte apenas por fora) ---
     const texture3d = new THREE.CanvasTexture(fCanvas.getElement());
     texture3d.colorSpace = THREE.SRGBColorSpace;
+    texture3d.wrapS = texture3d.wrapT = THREE.ClampToEdgeWrapping;
 
-    const mat = new THREE.ShaderMaterial({
+    const matPro = new THREE.ShaderMaterial({
         uniforms: { map: { value: texture3d }, color: { value: new THREE.Color(0xffffff) } },
         vertexShader: `varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }`,
         fragmentShader: `
@@ -95,7 +135,7 @@
         side: THREE.DoubleSide
     });
 
-    // 4. Carregar Caneca (Com verificação de erro)
+    // --- 5. CARREGAR CANECA ---
     const loader = new OBJLoader();
     loader.load('mug.obj', (obj) => {
         const mesh = obj.children[0];
@@ -106,41 +146,64 @@
         const center = box.getCenter(new THREE.Vector3());
         obj.position.sub(center);
 
-        // Mapeamento UV Estável
+        // Mapeamento UV Estável focado na frente
         const geo = mesh.geometry;
         geo.computeBoundingBox();
         const uv = geo.attributes.uv;
         const pos = geo.attributes.position;
         for (let i = 0; i < pos.count; i++) {
-            let u = Math.atan2(pos.getX(i), pos.getZ(i)) / (Math.PI * 2) + 0.5;
+            let u = Math.atan2(pos.getX(i), pos.getZ(i)) / (Math.PI * 1.5) + 0.5;
             let v = (pos.getY(i) - geo.boundingBox.min.y) / (geo.boundingBox.max.y - geo.boundingBox.min.y);
-            uv.setXY(i, (u + 0.5) % 1.0, v);
+            uv.setXY(i, u, v);
         }
 
-        mesh.material = mat;
+        mesh.material = matPro;
         scene.add(obj);
-        console.log("Caneca carregada com sucesso!");
-    }, 
-    (xhr) => console.log((xhr.loaded / xhr.total * 100) + '% carregado'),
-    (err) => alert("ERRO: O arquivo 'mug.obj' não foi encontrado na pasta!"));
+    }, undefined, (err) => alert("Erro ao carregar 'mug.obj'!"));
 
-    // Funções de Interface
-    window.addText = () => { fCanvas.add(new fabric.IText('Texto', {left: 50, top: 50})); };
+    // --- 6. FUNÇÕES DE INTERFACE ---
+    window.takePhoto = () => {
+        // Remove seleção do 2D para a foto sair limpa
+        fCanvas.discardActiveObject(); fCanvas.requestRenderAll();
+        setTimeout(() => {
+            const a = document.createElement('a');
+            a.download = 'Mockup_Nostalgicas_Pro.png';
+            a.href = renderer.domElement.toDataURL();
+            a.click();
+        }, 100);
+    };
+
+    window.downloadLayout = () => {
+        const a = document.createElement('a');
+        a.download = 'Layout_Impressao_210x95.png';
+        a.href = fCanvas.toDataURL({format: 'png', quality: 1});
+        a.click();
+    };
+
+    window.resetView = () => {
+        camera.position.set(0, 0, 6); controls.target.set(0,0,0); controls.update();
+        document.getElementById('cam-z').value = 6;
+    };
+
     document.getElementById('up-img').onchange = (e) => {
         const r = new FileReader();
         r.onload = (f) => fabric.Image.fromURL(f.target.result, (img) => {
-            img.scaleToWidth(100); fCanvas.add(img).centerObject(img);
+            img.scaleToWidth(200); fCanvas.add(img).centerObject(img);
         });
         r.readAsDataURL(e.target.files[0]);
     };
-    window.takePhoto = () => { const a = document.createElement('a'); a.download = 'foto.png'; a.href = renderer.domElement.toDataURL(); a.click(); };
-    window.downloadLayout = () => { const a = document.createElement('a'); a.download = 'layout.png'; a.href = fCanvas.toDataURL(); a.click(); };
-    
+
     document.getElementById('rot').oninput = (e) => texture3d.offset.x = parseFloat(e.target.value);
     document.getElementById('cam-z').oninput = (e) => camera.position.z = e.target.value;
 
     function animate() { requestAnimationFrame(animate); controls.update(); renderer.render(scene, camera); }
     animate();
+
+    // Responsividade
+    window.onresize = () => {
+        camera.aspect = (window.innerWidth - 380) / window.innerHeight; camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth - 380, window.innerHeight);
+    };
 </script>
 </body>
 </html>
