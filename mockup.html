@@ -2,7 +2,8 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Nostálgicas Studio - Mockup Premium 360°</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nostálgicas Studio - Mockup 3D Profissional v6</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/controls/OrbitControls.js"></script>
@@ -10,25 +11,33 @@
     
     <style>
         :root { --accent: #2ecc71; --dark: #1a1a1a; --text: #eee; }
-        body { margin: 0; display: flex; height: 100vh; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #111; color: var(--text); overflow: hidden; }
+        body { margin: 0; padding: 0; display: flex; height: 100vh; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #000; color: var(--text); overflow: hidden; }
         
-        /* MENU LATERAL PROFISSIONAL */
+        /* MENU LATERAL - ÁREA DE AJUSTE BLINDADA */
         #sidebar { 
-            width: 350px; min-width: 350px; background: var(--dark); 
-            padding: 25px; border-right: 3px solid var(--accent); 
-            display: flex; flex-direction: column;
-            overflow-y: auto; z-index: 100; box-shadow: 5px 0 15px rgba(0,0,0,0.5);
+            width: 340px; 
+            min-width: 340px; /* Impede que o menu suma */
+            background: var(--dark); 
+            padding: 25px; 
+            border-right: 3px solid var(--accent); 
+            display: flex; 
+            flex-direction: column;
+            overflow-y: auto; /* Permite rolar se o menu for grande */
+            z-index: 100; 
+            box-shadow: 5px 0 15px rgba(0,0,0,0.5);
         }
 
         /* ÁREA DO 3D - AMBIENTE DINÂMICO */
         #render-3d { 
             flex: 1; 
-            background: radial-gradient(circle, #ffffff 0%, #bbbbbb 100%); /* Fundo Padrão */
-            cursor: move; position: relative; transition: background 0.5s ease;
+            background: radial-gradient(circle, #ffffff 0%, #bbbbbb 100%); /* Fundo Padrão Cinza Claro */
+            cursor: move; 
+            position: relative; 
+            transition: background 0.5s ease;
         }
 
         .logo-container { text-align: center; margin-bottom: 20px; border-bottom: 1px solid #333; padding-bottom: 10px; }
-        .logo { color: var(--accent); font-weight: bold; font-size: 24px; text-transform: uppercase; letter-spacing: 2px; }
+        .logo { color: var(--accent); font-weight: bold; font-size: 22px; text-transform: uppercase; letter-spacing: 2px; }
         .subtitle { font-size: 10px; color: #666; }
 
         .section-title { font-size: 11px; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; margin: 20px 0 10px 0; font-weight: bold; }
@@ -38,17 +47,14 @@
         .grid-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
         .btn { padding: 12px; cursor: pointer; font-weight: bold; border: none; border-radius: 4px; text-transform: uppercase; font-size: 11px; transition: 0.2s ease; }
         .btn-gray { background: #333; color: white; border: 1px solid #444; }
-        .btn-gray:hover { background: #444; border-color: #555; }
         .btn-green { background: var(--accent); color: white; }
-        .btn-green:hover { background: #27ae60; transform: translateY(-2px); }
         .btn-danger { background: #e74c3c; color: white; grid-column: 1 / -1; font-size: 10px; padding: 8px; }
 
-        label { display: block; font-size: 11px; color: #aaa; margin: 15px 0 5px 0; text-transform: uppercase; font-weight: bold; }
+        label { display: block; font-size: 10px; color: #aaa; margin: 15px 0 5px 0; text-transform: uppercase; font-weight: bold; }
         input[type="range"] { width: 100%; accent-color: var(--accent); cursor: pointer; }
 
         .colors { display: flex; gap: 10px; margin-top: 5px; }
-        .c-circle { width: 35px; height: 35px; border-radius: 50%; cursor: pointer; border: 2px solid #444; transition: 0.2s ease; }
-        .c-circle:hover { transform: scale(1.1); }
+        .c-circle { width: 32px; height: 32px; border-radius: 50%; cursor: pointer; border: 2px solid #444; transition: 0.2s ease; }
         .c-circle.active { border-color: var(--accent); box-shadow: 0 0 10px rgba(46, 204, 113, 0.5); }
 
         .env-select { width: 100%; padding: 10px; background: #333; color: white; border: 1px solid #444; border-radius: 4px; cursor: pointer; font-size: 12px; }
@@ -59,7 +65,7 @@
 <aside id="sidebar">
     <div class="logo-container">
         <div class="logo">NOSTÁLGICAS</div>
-        <div class="subtitle">ESTÚDIO DE MOCKUPS 3D PREMIUM</div>
+        <div class="subtitle">MOCKUP 3D - CORREÇÃO TOTAL</div>
     </div>
 
     <div class="section-title">1. Design da Estampa (22,5x9,5cm)</div>
@@ -68,7 +74,7 @@
     </div>
 
     <div class="grid-btns">
-        <button class="btn btn-gray" onclick="document.getElementById('file').click()">+ Imagem</button>
+        <button class="btn btn-gray" onclick="document.getElementById('file').click()">+ Foto</button>
         <button class="btn btn-gray" onclick="addTxt()">+ Texto</button>
         <button class="btn btn-danger" onclick="delObj()">Apagar Selecionado</button>
     </div>
@@ -80,10 +86,10 @@
         <div class="c-circle active" style="background:#ffffff" onclick="changeMug(this, '#ffffff')"></div>
         <div class="c-circle" style="background:#111111" onclick="changeMug(this, '#111111')"></div>
         <div class="c-circle" style="background:#ffc0cb" onclick="changeMug(this, '#ffc0cb')"></div>
-        <div class="c-circle" style="background:#3498db" onclick="changeMug(this, '#3498db')"></div>
+        <div class="c-circle" style="background:#f1c40f" onclick="changeMug(this, '#f1c40f')"></div>
     </div>
 
-    <label>Girar Arte (Ajuste Fino)</label>
+    <label>Girar Arte (Ajuste Horizontal)</label>
     <input type="range" id="slide-rot" min="-0.5" max="0.5" step="0.001" value="0">
 
     <div class="section-title">3. Ambiente do Mockup</div>
@@ -92,10 +98,10 @@
         <option value="radial-gradient(circle, #ffffff 0%, #bbbbbb 100%)">Estúdio Clean (Padrão)</option>
         <option value="wood">Mesa de Madeira Rústica</option>
         <option value="kitchen">Cozinha Moderna</option>
-        <option value="#333333">Cinza Escuro Sólido</option>
+        <option value="#1a1a1a">Cinza Escuro Sólido</option>
     </select>
 
-    <button class="btn btn-green" style="margin-top: 30px; width: 100%; padding: 15px; font-size: 13px;" onclick="baixar()">Gerar Foto para Cliente</button>
+    <button class="btn btn-green" style="margin-top: 25px; width: 100%; padding: 15px; font-size: 13px;" onclick="baixar()">Baixar Foto p/ Cliente</button>
 </aside>
 
 <div id="render-3d"></div>
@@ -109,7 +115,7 @@
 
     function addTxt() {
         const t = new fabric.IText('Seu Texto', { 
-            left: 50, top: 50, fontSize: 30, fill: '#000', fontFamily: 'Arial Black' 
+            left: 50, top: 50, fontSize: 30, fill: '#000', fontFamily: 'Arial' 
         });
         fCanvas.add(t).setActiveObject(t);
     }
@@ -118,10 +124,7 @@
     document.getElementById('file').onchange = (e) => {
         const r = new FileReader();
         r.onload = (f) => fabric.Image.fromURL(f.target.result, (img) => {
-            // Ajuste inteligente de tamanho
-            if(img.width > img.height) { img.scaleToWidth(200); } 
-            else { img.scaleToHeight(150); }
-            fCanvas.add(img).centerObject(img);
+            img.scaleToWidth(150); fCanvas.add(img).centerObject(img);
         });
         r.readAsDataURL(e.target.files[0]);
     };
@@ -130,17 +133,17 @@
     const scene = new THREE.Scene();
     const container = document.getElementById('render-3d');
     
-    // Câmera equilibrada
+    // Câmera equilibrada - CORREÇÃO: Posição que mostra interior e frente
     const cam = new THREE.PerspectiveCamera(40, container.clientWidth / container.clientHeight, 0.1, 1000);
-    cam.position.set(0, 1.5, 8); // Posição inicial
+    cam.position.set(0, 2, 7); // Levemente alta para ver o interior branco
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
     renderer.setSize(container.clientWidth, container.clientHeight);
     renderer.setPixelRatio(window.devicePixelRatio);
-    renderer.outputEncoding = THREE.sRGBEncoding; // Melhora as cores
+    renderer.outputEncoding = THREE.sRGBEncoding; 
     container.appendChild(renderer.domElement);
 
-    // --- NOVO: ROTAÇÃO 3D LIVRE (ORBITCONTROLS) ---
+    // Rotação 3D Livre (OrbitControls)
     const controls = new THREE.OrbitControls(cam, renderer.domElement);
     controls.enableDamping = true; // Movimento suave
     controls.dampingFactor = 0.1;
@@ -148,64 +151,68 @@
     controls.maxDistance = 15; // Zoom mínimo
     controls.target.set(0, 0, 0); // Foco no centro da caneca
 
-    // Iluminação de Estúdio Profissional
-    scene.add(new THREE.AmbientLight(0xffffff, 0.9)); // Luz base forte
-    const mainLight = new THREE.DirectionalLight(0xffffff, 0.7);
+    // Iluminação de Estúdio Profissional (Melhorada para o interior)
+    scene.add(new THREE.AmbientLight(0xffffff, 1.0)); // Luz base forte
+    const mainLight = new THREE.DirectionalLight(0xffffff, 0.6);
     mainLight.position.set(5, 10, 7); // Luz vindo de cima/direita
     scene.add(mainLight);
 
-    const backLight = new THREE.DirectionalLight(0xffffff, 0.3);
-    backLight.position.set(-5, 2, -5); // Luz de preenchimento atrás
-    scene.add(backLight);
-
-    // --- 3. CONSTRUÇÃO DA CANECA (PROFISSIONAL) ---
+    // --- 3. CONSTRUÇÃO DA CANECA (PROFISSIONAL - FUNDO FECHADO) ---
     const tex = new THREE.CanvasTexture(fCanvas.getElement());
     tex.wrapS = THREE.RepeatWrapping;
     tex.encoding = THREE.sRGBEncoding;
     
-    // Material Externo (Recebe a estampa)
+    // Materiais
     const matExt = new THREE.MeshPhongMaterial({ 
-        map: tex, side: THREE.FrontSide, shininess: 90, specular: 0x333333 
+        map: tex, side: THREE.FrontSide, shininess: 80, specular: 0x333333 
     });
-    // Material Interno/Alça (Sólido)
     const matPlain = new THREE.MeshPhongMaterial({ 
-        color: 0xffffff, side: THREE.FrontSide, shininess: 100, specular: 0x555555 
+        color: 0xffffff, side: THREE.FrontSide, shininess: 90, specular: 0x555555 
     });
 
     const mugGroup = new THREE.Group();
 
     // Peças da Caneca (LatheGeometry para curvas suaves)
-    const ptsE = []; for(let i=0; i<=10; i++) ptsE.push(new THREE.Vector2(1.1, (i-5)*0.25));
+    // CORREÇÃO: Perfil lateral definido com precisão para base e interior
+    const ptsE = []; for(let i=0; i<=20; i++) ptsE.push(new THREE.Vector2(1.1, (i-10)*0.125));
     mugGroup.add(new THREE.Mesh(new THREE.LatheGeometry(ptsE, 64), matExt));
 
-    const ptsI = []; for(let i=0; i<=10; i++) ptsI.push(new THREE.Vector2(1.05, (i-5)*0.24));
+    // Interior (Sempre liso, CORREÇÃO: Interior Branco Puro)
+    const ptsI = []; for(let i=0; i<=18; i++) ptsI.push(new THREE.Vector2(1.05, (i-9)*0.12));
     const innerMug = new THREE.Mesh(new THREE.LatheGeometry(ptsI, 64), matPlain);
-    innerMug.rotation.x = Math.PI; // Inverte para dentro
+    innerMug.rotation.x = Math.PI; // Inverte para as faces ficarem para dentro
     mugGroup.add(innerMug);
 
-    // Borda Superior, Fundo e Alça
+    // Borda Superior (Fecha o topo)
     const ring = new THREE.Mesh(new THREE.RingGeometry(1.05, 1.1, 64), matPlain);
-    ring.rotation.x = -Math.PI/2; ring.position.y = 1.25;
+    ring.rotation.x = -Math.PI / 2;
+    ring.position.y = 1.25;
     mugGroup.add(ring);
 
-    const bottom = new THREE.Mesh(new THREE.CircleGeometry(1.1, 64), matPlain);
-    bottom.rotation.x = -Math.PI/2; bottom.position.y = -1.25;
-    mugGroup.add(bottom);
+    // Fundo da Caneca (CORREÇÃO: Fundo Fechado e Arredondado)
+    const geoBottom = new THREE.CircleGeometry(1.1, 64);
+    const mugBottom = new THREE.Mesh(geoBottom, matPlain);
+    mugBottom.rotation.x = -Math.PI / 2;
+    mugBottom.position.y = -1.25; // Base fechada
+    mugGroup.add(mugBottom);
 
-    const handle = new THREE.Mesh(new THREE.TorusGeometry(0.75, 0.12, 12, 48, Math.PI), matPlain);
-    handle.position.set(1.1, 0, 0); handle.rotation.z = -Math.PI/2;
-    mugGroup.add(handle);
+    // Alça (Torus)
+    const geoHandle = new THREE.TorusGeometry(0.75, 0.13, 16, 100, Math.PI);
+    const mugHandle = new THREE.Mesh(geoHandle, matPlain);
+    mugHandle.position.set(1.1, 0, 0);
+    mugHandle.rotation.z = -Math.PI / 2;
+    mugGroup.add(mugHandle);
 
     scene.add(mugGroup);
 
     // Sombra de Chão para Realismo
     const shadowGeo = new THREE.CircleGeometry(1.2, 32);
-    const shadowMat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.15 });
+    const shadowMat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.2 });
     const shadow = new THREE.Mesh(shadowGeo, shadowMat);
     shadow.rotation.x = -Math.PI/2; shadow.position.y = -1.26;
     scene.add(shadow);
 
-    // --- 4. FUNÇÕES DO MOCKUP PREMIUM ---
+    // --- 4. FUNÇÕES DO MOCKUP ---
     
     // Mudar Cor do Interior/Alça
     window.changeMug = (btn, cor) => {
@@ -214,7 +221,7 @@
         btn.classList.add('active');
     };
 
-    // NOVO: Mudar Ambiente (Cenário)
+    // Mudar Ambiente (Cenário)
     window.changeEnv = (val) => {
         const container = document.getElementById('render-3d');
         if (val === 'wood') {
@@ -232,13 +239,13 @@
         fCanvas.discardActiveObject(); fCanvas.renderAll();
         setTimeout(() => {
             const a = document.createElement('a');
-            a.download = 'Mockup_Premium_Nostalgicas.png';
+            a.download = 'Mockup_Nostalgicas.png';
             a.href = renderer.domElement.toDataURL('image/png');
             a.click();
         }, 150);
     };
 
-    // Slider de Rotação da Arte (Ajuste Fino)
+    // Slider de Rotação da Arte (Ajuste Horizontal)
     document.getElementById('slide-rot').oninput = (e) => tex.offset.x = parseFloat(e.target.value);
 
     // Loop de Animação
