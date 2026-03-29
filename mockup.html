@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Nostálgicas Studio - Correção de Posição</title>
+    <title>Nostálgicas Studio - Controle de Base</title>
     <script type="importmap">
       { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js", "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/" } }
     </script>
@@ -10,14 +10,12 @@
     <style>
         body { margin: 0; display: flex; height: 100vh; font-family: sans-serif; background: #1a1a1a; overflow: hidden; }
         #render-3d { flex: 1; background: #fff; }
-        #sidebar { width: 350px; background: #ffffff; border-left: 3px solid #3376e3; padding: 20px; box-shadow: -10px 0 20px rgba(0,0,0,0.2); z-index: 10; display: flex; flex-direction: column; overflow-y: auto; }
+        #sidebar { width: 350px; background: #ffffff; border-left: 3px solid #3376e3; padding: 20px; display: flex; flex-direction: column; overflow-y: auto; }
         .canvas-container { border: 2px solid #3376e3; margin: 15px 0; background: #fdfdfd; border-radius: 5px; }
-        .btn { background: #3376e3; color: white; border: none; padding: 15px; width: 100%; font-weight: bold; cursor: pointer; border-radius: 5px; text-transform: uppercase; }
-        .btn-limpar { background: #4a5568; margin-top: 10px; padding: 10px; color: white; border: none; width: 100%; border-radius: 5px; cursor: pointer; }
-        .controles-manuais { margin-top: 15px; border-top: 1px solid #eee; padding-top: 10px; }
-        label { font-size: 11px; font-weight: bold; display: block; margin-top: 10px; color: #333; }
+        .btn { background: #3376e3; color: white; border: none; padding: 15px; width: 100%; font-weight: bold; cursor: pointer; border-radius: 5px; }
+        .controles-manuais { margin-top: 10px; border-top: 1px solid #eee; padding-top: 10px; }
+        label { font-size: 11px; font-weight: bold; display: block; margin-top: 8px; color: #333; }
         input[type="range"] { width: 100%; cursor: pointer; }
-        h2 { color: #333; margin-top: 0; font-size: 18px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
     </style>
 </head>
 <body>
@@ -25,8 +23,7 @@
 <div id="render-3d"></div>
 
 <aside id="sidebar">
-    <h2>Nostálgicas Studio</h2>
-    
+    <h2 style="font-size:18px; color:#333">Nostálgicas Studio</h2>
     <input type="file" id="input-imagem" style="display:none" accept="image/*">
     <button class="btn" onclick="document.getElementById('input-imagem').click()">📂 CARREGAR ARTE</button>
 
@@ -35,19 +32,20 @@
     </div>
 
     <div class="controles-manuais">
-        <label>Girar Caneca (Posição da Alça)</label>
-<input type="range" id="girar-caneca" min="-3.14" max="3.14" step="0.01" value="0">
-        <label>Girar Arte (Ajuste Fino)</label>
+        <label style="color: #d32f2f;">1. GIRAR CANECA (Tire a alça da frente)</label>
+        <input type="range" id="girar-caneca" min="-3.14" max="3.14" step="0.01" value="0">
+
+        <label style="color: #3376e3;">2. GIRAR ARTE (Traga a foto para frente)</label>
         <input type="range" id="rotacao" min="-3.14" max="3.14" step="0.01" value="0">
         
-        <label>Altura (Vertical)</label>
-        <input type="range" id="altura" min="-1" max="1" step="0.01" value="0">
+        <label>ALTURA</label>
+        <input type="range" id="altura" min="-1.5" max="1.5" step="0.01" value="0">
         
-        <label>Zoom da Estampa</label>
-        <input type="range" id="zoom" min="0.8" max="1.2" step="0.01" value="1.0">
+        <label>TAMANHO (ZOOM)</label>
+        <input type="range" id="zoom" min="0.8" max="1.3" step="0.01" value="1.0">
     </div>
 
-    <button class="btn-limpar" onclick="limparAjustes()">✔️ FINALIZAR (Limpar bordas)</button>
+    <button style="margin-top:15px; background:#444" class="btn" onclick="fCanvas.discardActiveObject(); fCanvas.requestRenderAll();">✔️ LIMPAR BORDAS</button>
 </aside>
 
 <script type="module">
@@ -57,14 +55,7 @@
 
     let scene, camera, renderer, controls, caneca, estampa, fCanvas;
 
-    // --- 1. EDITOR 2D ---
     fCanvas = new fabric.Canvas('editor-2d', { backgroundColor: '#ffffff' });
-    
-    window.limparAjustes = () => {
-        fCanvas.discardActiveObject();
-        fCanvas.requestRenderAll();
-    };
-
     fCanvas.on('after:render', () => {
         if (!estampa) return;
         const texture = new THREE.CanvasTexture(fCanvas.getElement());
@@ -73,10 +64,8 @@
         estampa.material.needsUpdate = true;
     });
 
-    // --- 2. AMBIENTE 3D ---
     scene = new THREE.Scene();
     scene.background = new THREE.Color(0xffffff);
-
     camera = new THREE.PerspectiveCamera(45, (window.innerWidth - 350) / window.innerHeight, 0.1, 1000);
     camera.position.set(0, 0, 10);
 
@@ -87,44 +76,25 @@
     controls = new OrbitControls(camera, renderer.domElement);
     scene.add(new THREE.AmbientLight(0xffffff, 2));
 
-    // --- 3. CARREGAR CANECA COM CORREÇÃO DE POSIÇÃO ---
     new OBJLoader().load('mug.obj', (obj) => {
         caneca = obj;
         caneca.scale.set(50, 50, 50); 
-
         const box = new THREE.Box3().setFromObject(caneca);
         const center = box.getCenter(new THREE.Vector3());
         const size = box.getSize(new THREE.Vector3());
-        
         caneca.position.sub(center);
-        caneca.traverse(c => {
-            if (c.isMesh) c.material = new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: 0.1 });
-        });
+        caneca.traverse(c => { if (c.isMesh) c.material = new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: 0.1 }); });
         scene.add(caneca);
 
-        // --- CORREÇÃO DA ESTAMPA: MOVENDO PARA A FRENTE ---
-        const raio = (size.x / 2) * 1.015;
-        const altura = size.y * 0.85;
-        
-        // Comprimento 3.8 e início -1.9 garantem que a arte não chegue na alça
-        const geo = new THREE.CylinderGeometry(raio, raio, altura, 64, 1, true, -1.9, 3.8);
-        
-        estampa = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ 
-            transparent: true, 
-            side: THREE.DoubleSide,
-            polygonOffset: true, 
-            polygonOffsetFactor: -1 
-        }));
-
-        // MUDANÇA VITAL: rotation.y em 0 traz o decalque para a frente (foge da alça)
-        estampa.rotation.y = 0; 
+        // Estampa com corte para a alça (3.8 radianos)
+        const geo = new THREE.CylinderGeometry((size.x/2)*1.015, (size.x/2)*1.015, size.y*0.85, 64, 1, true, -1.9, 3.8);
+        estampa = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ transparent: true, side: THREE.DoubleSide }));
         scene.add(estampa);
-
+        
         camera.position.z = size.z * 2.5;
         controls.update();
     });
 
-    // --- 4. CARREGAR IMAGEM ---
     document.getElementById('input-imagem').onchange = (e) => {
         const reader = new FileReader();
         reader.onload = (event) => {
@@ -138,7 +108,11 @@
         reader.readAsDataURL(e.target.files[0]);
     };
 
-    // --- 5. CONTROLES MANUAIS ---
+    // --- CONTROLES DOS SLIDERS ---
+    document.getElementById('girar-caneca').addEventListener('input', (e) => {
+        if (caneca) caneca.rotation.y = parseFloat(e.target.value);
+    });
+
     document.getElementById('rotacao').addEventListener('input', (e) => {
         if (estampa) estampa.rotation.y = parseFloat(e.target.value);
     });
@@ -154,17 +128,8 @@
         }
     });
 
-    function animate() {
-        requestAnimationFrame(animate);
-        controls.update();
-        renderer.render(scene, camera);
-    }
+    function animate() { requestAnimationFrame(animate); controls.update(); renderer.render(scene, camera); }
     animate();
-</script// Este comando gira o objeto da caneca inteira
-document.getElementById('girar-caneca').addEventListener('input', (e) => {
-    if (caneca) {
-        caneca.rotation.y = parseFloat(e.target.value);
-    }
-});>
+</script>
 </body>
 </html>
