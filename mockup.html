@@ -32,6 +32,8 @@
     </div>
 
     <div class="controles-manuais">
+        <label>Girar Encaixe da Arte (360°)</label>
+<input type="range" id="rotacao" min="-6.28" max="6.28" step="0.01" value="0">
         <label style="color: #d32f2f;">1. GIRAR CANECA (Tire a alça da frente)</label>
         <input type="range" id="girar-caneca" min="-3.14" max="3.14" step="0.01" value="0">
 
@@ -130,6 +132,12 @@
 
     function animate() { requestAnimationFrame(animate); controls.update(); renderer.render(scene, camera); }
     animate();
-</script>
+</script// Este comando gira apenas o encaixe (a estampa)
+document.getElementById('rotacao').addEventListener('input', (e) => {
+    if (estampa) {
+        // Converte o valor do slider em rotação real no 3D
+        estampa.rotation.y = parseFloat(e.target.value);
+    }
+});>
 </body>
 </html>
