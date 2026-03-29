@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nostálgicas Studio - Texturização Direta UV</title>
+    <title>Nostálgicas Studio - Impressão Direta UV</title>
     <script type="importmap">
       { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js", "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/" } }
     </script>
@@ -40,7 +40,7 @@
         <canvas id="canvas2d" width="330" height="150"></canvas>
     </div>
 
-    <span class="section-title">Controle da Caneca</span>
+    <span class="section-title">Controle da Caneca (Porcelana)</span>
     <div class="control-group">
         <label>Tamanho da Caneca</label>
         <input type="range" id="escala-caneca" min="10" max="150" value="50">
@@ -49,7 +49,7 @@
         <input type="range" id="luz-int" min="0.5" max="4" step="0.1" value="2.2">
     </div>
 
-    <span class="section-title">Controle da Arte (Projeção Direta)</span>
+    <span class="section-title">Controle da Arte (Impressão UV Direta)</span>
     <div class="control-group">
         <label>Girar Posição na Caneca</label>
         <input type="range" id="rotacao" min="-3.14" max="3.14" step="0.01" value="0">
@@ -60,3 +60,100 @@
         <label>Zoom/Tamanho da Arte</label>
         <input type="range" id="zoom-arte" min="0.2" max="2" step="0.01" value="1.0">
     </div>
+
+    <span class="section-title">Visualização</span>
+    <div class="control-group">
+        <label>Aproximar Câmera (Zoom)</label>
+        <input type="range" id="zoom-camera" min="1" max="15" step="0.1" value="6">
+    </div>
+
+    <button class="btn btn-secondary" onclick="fCanvas.discardActiveObject(); fCanvas.requestRenderAll();">✨ Limpar Seleção</button>
+    <button class="btn btn-success" onclick="salvarFoto()">📸 SALVAR MOCKUP</button>
+</aside>
+
+<script type="module">
+    import * as THREE from 'three';
+    import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+    let scene, camera, renderer, controls, canecaMesh, canecaMaterial, fCanvas, texture3d, ambientLight;
+
+    // --- 1. EDITOR 2D (FABRIC.JS) ---
+    fCanvas = new fabric.Canvas('canvas2d', { backgroundColor: '#ffffff' });
+    
+    // Atualiza a textura 3D diretamente quando o 2D muda
+    fCanvas.on('after:render', () => {
+        if (texture3d) {
+            texture3d.needsUpdate = true; // Avisa o Three.js para recarregar o canvas
+        }
+    });
+
+    // --- 2. MOTOR 3D (THREE.JS) ---
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xffffff);
+    
+    camera = new THREE.PerspectiveCamera(40, (window.innerWidth - 380) / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 0, 6);
+
+    renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+    renderer.setSize(window.innerWidth - 380, window.innerHeight);
+    renderer.setPixelRatio(window.devicePixelRatio);
+    document.getElementById('render-3d').appendChild(renderer.domElement);
+
+    controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+
+    ambientLight = new THREE.AmbientLight(0xffffff, 2.2);
+    scene.add(ambientLight);
+
+    const sunLight = new THREE.DirectionalLight(0xffffff, 0.6);
+    sunLight.position.set(5, 5, 5);
+    scene.add(sunLight);
+
+    // --- 3. FUNÇÃO DE MAPEAMENTO UV CUSTOMIZADO (O SEGREDO) ---
+    // Esta função projeta a textura apenas na frente da caneca, ignorando a alça.
+    function aplicarMapeamentoUV(geometry) {
+        geometry.computeBoundingBox();
+        const bbox = geometry.boundingBox;
+        const size = new THREE.Vector3();
+        bbox.getSize(size);
+
+        const uvAttribute = geometry.attributes.uv;
+        const positions = geometry.attributes.position;
+
+        for (let i = 0; i < positions.count; i++) {
+            const x = positions.getX(i);
+            const y = positions.getY(i);
+            const z = positions.getZ(i);
+
+            // Converte coordenadas cartesianas (X,Z) em angulares (U)
+            let u = Math.atan2(x, z) / (Math.PI * 2) + 0.5;
+            
+            // Mapeia a altura (Y) para V (0 a 1)
+            let v = (y - bbox.min.y) / size.y;
+
+            // Ajuste fino para centralizar a projeção na frente
+            u = (u + 0.5) % 1.0; 
+
+            uvAttribute.setXY(i, u, v);
+        }
+        uvAttribute.needsUpdate = true;
+    }
+
+    // --- 4. CARREGAR MODELO E APLICAR TEXTURA DIRETA ---
+    const textureLoader = new THREE.TextureLoader();
+    
+    // Cria a textura a partir do Canvas do Fabric.js
+    texture3d = new THREE.CanvasTexture(fCanvas.getElement());
+    texture3d.colorSpace = THREE.SRGBColorSpace;
+    texture3d.wrapS = THREE.RepeatWrapping; // Permite repetir horizontalmente
+    texture3d.wrapT = THREE.RepeatWrapping; // Permite repetir verticalmente
+    texture3d.anisotropy = 16; // Melhor qualidade
+
+    new OBJLoader().load('mug.obj', (obj) => {
+        canecaMesh = obj.children[0]; // Pega a malha principal da caneca
+        obj.scale.set(50, 50, 50);
+        
+        // Centralização absoluta
+        const box = new THREE.Box3().setFromObject(obj);
+        const center = box
