@@ -2,27 +2,19 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nostálgicas Studio - Mockup 3D v3</title>
-    
+    <title>Nostálgicas Studio - Mockup 3D</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/controls/OrbitControls.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
-    
     <style>
-        :root { --accent: #2ecc71; }
-        body { margin: 0; display: flex; height: 100vh; font-family: sans-serif; background: #111; color: white; overflow: hidden; }
-        #render-3d { flex: 1; background: #ffffff; position: relative; }
-        #sidebar { width: 340px; background: #1a1a1a; padding: 20px; border-left: 3px solid var(--accent); overflow-y: auto; }
-        .canvas-area { background: #fff; margin-bottom: 15px; border: 1px solid var(--accent); }
+        body { margin: 0; display: flex; height: 100vh; font-family: sans-serif; background: #000; overflow: hidden; }
+        #render-3d { flex: 1; background: #ffffff; }
+        #sidebar { width: 320px; background: #1a1a1a; padding: 20px; border-left: 3px solid #2ecc71; color: white; }
+        .canvas-area { background: #fff; margin-bottom: 15px; border: 1px solid #2ecc71; }
         .btn { width: 100%; padding: 12px; margin-bottom: 10px; cursor: pointer; font-weight: bold; border: none; border-radius: 4px; text-transform: uppercase; }
         .btn-img { background: #333; color: #fff; }
-        .btn-save { background: var(--accent); color: #fff; }
-        label { font-size: 10px; color: #888; display: block; margin-top: 15px; font-weight: bold; }
-        input[type="range"] { width: 100%; accent-color: var(--accent); margin-bottom: 10px; }
-        .color-picker { display: flex; gap: 10px; margin-bottom: 15px; }
-        .color-btn { width: 30px; height: 30px; border-radius: 50%; cursor: pointer; border: 2px solid #555; }
-        .color-btn.active { border-color: var(--accent); }
+        .btn-save { background: #2ecc71; color: #fff; }
+        label { font-size: 10px; color: #888; display: block; margin-top: 15px; }
+        input[type="range"] { width: 100%; accent-color: #2ecc71; }
     </style>
 </head>
 <body>
@@ -30,9 +22,7 @@
 <div id="render-3d"></div>
 
 <aside id="sidebar">
-    <h2 style="color:var(--accent); margin:0;">NOSTÁLGICAS</h2>
-    <p style="font-size:10px; color:#666; margin-bottom:15px;">MOCKUP 3D - 22,5 x 9,5 cm</p>
-
+    <h2 style="color:#2ecc71; margin:0;">NOSTÁLGICAS</h2>
     <div class="canvas-area">
         <canvas id="canvas2d" width="450" height="190" style="width: 100%; height: auto;"></canvas>
     </div>
@@ -40,25 +30,13 @@
     <input type="file" id="up-img" style="display:none" accept="image/*">
     <button class="btn btn-img" onclick="document.getElementById('up-img').click()">Inserir Arte</button>
 
-    <div style="border-top: 1px solid #333; padding-top: 10px;">
-        <label>Cor do Interior</label>
-        <div class="color-picker">
-            <div class="color-btn active" style="background:#fff" onclick="changeColor(this, '#ffffff')"></div>
-            <div class="color-btn" style="background:#111" onclick="changeColor(this, '#111111')"></div>
-            <div class="color-btn" style="background:#ffc0cb" onclick="changeColor(this, '#ffc0cb')"></div>
-        </div>
+    <label>Girar Arte</label>
+    <input type="range" id="rot" min="-0.5" max="0.5" step="0.001" value="0">
+    
+    <label>Altura da Câmera</label>
+    <input type="range" id="cam-y" min="-1" max="3" step="0.1" value="0.5">
 
-        <label>Girar Arte</label>
-        <input type="range" id="rot" min="-0.5" max="0.5" step="0.001" value="0">
-        
-        <label>Aproximar (Zoom)</label>
-        <input type="range" id="zoom" min="4" max="12" step="0.1" value="7">
-
-        <label>Altura da Câmera</label>
-        <input type="range" id="cam-y" min="-1" max="4" step="0.1" value="1.2">
-    </div>
-
-    <button class="btn btn-save" onclick="savePreview()">Salvar Foto Cliente</button>
+    <button class="btn btn-save" onclick="savePreview()">Salvar Foto</button>
 </aside>
 
 <script>
@@ -66,73 +44,36 @@
     const fCanvas = new fabric.Canvas('canvas2d', { backgroundColor: '#ffffff' });
     fCanvas.on('after:render', () => { if(texture) texture.needsUpdate = true; });
 
-    // 2. Cena 3D
+    // 2. Cena 3D Simples
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0xffffff);
     const container = document.getElementById('render-3d');
-    const camera = new THREE.PerspectiveCamera(40, container.clientWidth / container.clientHeight, 0.1, 1000);
-    camera.position.set(0, 1.2, 7);
+    const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
+    camera.position.set(0, 0.5, 6);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
     renderer.setSize(container.clientWidth, container.clientHeight);
-    renderer.setPixelRatio(window.devicePixelRatio);
     container.appendChild(renderer.domElement);
 
-    const controls = new THREE.OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
+    scene.add(new THREE.AmbientLight(0xffffff, 1.5));
 
-    // Luzes potentes
-    scene.add(new THREE.AmbientLight(0xffffff, 1.2));
-    const light = new THREE.PointLight(0xffffff, 0.5);
-    light.position.set(10, 10, 10);
-    scene.add(light);
-
-    // 3. Criando a Caneca (Corrigida)
+    // 3. Caneca Sólida (Cilindro Direto)
     const texture = new THREE.CanvasTexture(fCanvas.getElement());
     texture.wrapS = THREE.RepeatWrapping;
 
-    // Materiais
-    const matExt = new THREE.MeshPhongMaterial({ map: texture, color: 0xffffff, side: THREE.FrontSide, shininess: 80 });
-    const matInt = new THREE.MeshPhongMaterial({ color: 0xffffff, side: THREE.FrontSide, shininess: 80 });
-
-    const mugGroup = new THREE.Group();
-
-    // Malha Lateral Externa
-    const points = [];
-    for (let i = 0; i <= 10; i++) { points.push(new THREE.Vector2(1.1, (i - 5) * 0.25)); }
-    const mugExt = new THREE.Mesh(new THREE.LatheGeometry(points, 64), matExt);
-    mugGroup.add(mugExt);
-
-    // Malha Lateral Interna
-    const pointsIn = [];
-    for (let i = 0; i <= 10; i++) { pointsIn.push(new THREE.Vector2(1.05, (i - 5) * 0.24)); }
-    const mugInt = new THREE.Mesh(new THREE.LatheGeometry(pointsIn, 64), matInt);
-    mugInt.rotation.x = Math.PI; 
-    mugGroup.add(mugInt);
-
-    // Fundo e Borda
-    const bottom = new THREE.Mesh(new THREE.CircleGeometry(1.1, 64), matInt);
-    bottom.rotation.x = -Math.PI/2; bottom.position.y = -1.25;
-    mugGroup.add(bottom);
-
-    const ring = new THREE.Mesh(new THREE.RingGeometry(1.05, 1.1, 64), matInt);
-    ring.rotation.x = -Math.PI/2; ring.position.y = 1.25;
-    mugGroup.add(ring);
+    const mugGeo = new THREE.CylinderGeometry(1.1, 1.1, 2.5, 64, 1, false);
+    const mugMat = new THREE.MeshPhongMaterial({ map: texture, color: 0xffffff });
+    const mug = new THREE.Mesh(mugGeo, mugMat);
+    scene.add(mug);
 
     // Alça
-    const handle = new THREE.Mesh(new THREE.TorusGeometry(0.75, 0.12, 12, 48, Math.PI), matInt);
-    handle.position.set(1.1, 0, 0); handle.rotation.z = -Math.PI/2;
-    mugGroup.add(handle);
-
-    scene.add(mugGroup);
+    const handleGeo = new THREE.TorusGeometry(0.7, 0.12, 12, 48, Math.PI);
+    const handle = new THREE.Mesh(handleGeo, new THREE.MeshPhongMaterial({color: 0xffffff}));
+    handle.position.set(1.1, 0, 0);
+    handle.rotation.z = -Math.PI/2;
+    scene.add(handle);
 
     // 4. Funções
-    window.changeColor = (btn, color) => {
-        matInt.color.set(color);
-        document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-    };
-
     document.getElementById('up-img').onchange = (e) => {
         const reader = new FileReader();
         reader.onload = (f) => fabric.Image.fromURL(f.target.result, (img) => {
@@ -145,15 +86,13 @@
         fCanvas.discardActiveObject(); fCanvas.renderAll();
         setTimeout(() => {
             const a = document.createElement('a');
-            a.download = 'Nostalgicas_Mockup.png';
+            a.download = 'Nostalgicas.png';
             a.href = renderer.domElement.toDataURL();
             a.click();
-        }, 150);
+        }, 100);
     };
 
-    // Sliders
     document.getElementById('rot').oninput = (e) => texture.offset.x = parseFloat(e.target.value);
-    document.getElementById('zoom').oninput = (e) => camera.position.z = parseFloat(e.target.value);
     document.getElementById('cam-y').oninput = (e) => {
         camera.position.y = parseFloat(e.target.value);
         camera.lookAt(0,0,0);
@@ -161,7 +100,6 @@
 
     function animate() {
         requestAnimationFrame(animate);
-        controls.update();
         renderer.render(scene, camera);
     }
     animate();
