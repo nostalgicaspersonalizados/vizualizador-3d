@@ -1,108 +1,96 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html>
 <head>
     <meta charset="UTF-8">
-    <title>Nostálgicas Studio - Mockup 3D</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
+    <title>Nostálgicas Studio 3D</title>
+    <script src="https://unpkg.com/three@0.128.0/build/three.min.js"></script>
+    <script src="https://unpkg.com/fabric@5.3.0/dist/fabric.min.js"></script>
     <style>
-        body { margin: 0; display: flex; height: 100vh; font-family: sans-serif; background: #000; overflow: hidden; }
-        #render-3d { flex: 1; background: #ffffff; }
-        #sidebar { width: 320px; background: #1a1a1a; padding: 20px; border-left: 3px solid #2ecc71; color: white; }
-        .canvas-area { background: #fff; margin-bottom: 15px; border: 1px solid #2ecc71; }
-        .btn { width: 100%; padding: 12px; margin-bottom: 10px; cursor: pointer; font-weight: bold; border: none; border-radius: 4px; text-transform: uppercase; }
-        .btn-img { background: #333; color: #fff; }
-        .btn-save { background: #2ecc71; color: #fff; }
-        label { font-size: 10px; color: #888; display: block; margin-top: 15px; }
-        input[type="range"] { width: 100%; accent-color: #2ecc71; }
+        body { margin: 0; display: flex; height: 100vh; font-family: sans-serif; background: #000; color: white; overflow: hidden; }
+        #canvas-3d { flex: 1; background: #eee; }
+        #menu { width: 300px; background: #111; padding: 20px; border-left: 2px solid #2ecc71; }
+        .area-2d { background: #fff; margin-bottom: 15px; border: 1px solid #2ecc71; line-height: 0; }
+        .btn { width: 100%; padding: 12px; margin-bottom: 10px; cursor: pointer; font-weight: bold; border: none; border-radius: 4px; text-transform: uppercase; background: #2ecc71; color: white; }
+        label { font-size: 10px; color: #888; display: block; margin-top: 10px; }
+        input[type="range"] { width: 100%; }
     </style>
 </head>
 <body>
 
-<div id="render-3d"></div>
+<div id="canvas-3d"></div>
 
-<aside id="sidebar">
-    <h2 style="color:#2ecc71; margin:0;">NOSTÁLGICAS</h2>
-    <div class="canvas-area">
-        <canvas id="canvas2d" width="450" height="190" style="width: 100%; height: auto;"></canvas>
+<aside id="menu">
+    <h2 style="color:#2ecc71; margin:0 0 10px 0;">NOSTÁLGICAS</h2>
+    <div class="area-2d">
+        <canvas id="c2d" width="450" height="190" style="width:100%; height:auto;"></canvas>
     </div>
-
-    <input type="file" id="up-img" style="display:none" accept="image/*">
-    <button class="btn btn-img" onclick="document.getElementById('up-img').click()">Inserir Arte</button>
-
-    <label>Girar Arte</label>
-    <input type="range" id="rot" min="-0.5" max="0.5" step="0.001" value="0">
+    <input type="file" id="foto" style="display:none" accept="image/*">
+    <button class="btn" onclick="document.getElementById('foto').click()">COLOCAR FOTO</button>
     
-    <label>Altura da Câmera</label>
-    <input type="range" id="cam-y" min="-1" max="3" step="0.1" value="0.5">
-
-    <button class="btn btn-save" onclick="savePreview()">Salvar Foto</button>
+    <label>GIRAR ESTAMPA</label>
+    <input type="range" id="girar" min="-0.5" max="0.5" step="0.001" value="0">
+    
+    <button class="btn" style="background:#444" onclick="baixar()">BAIXAR FOTO</button>
 </aside>
 
 <script>
-    // 1. Editor 2D
-    const fCanvas = new fabric.Canvas('canvas2d', { backgroundColor: '#ffffff' });
-    fCanvas.on('after:render', () => { if(texture) texture.needsUpdate = true; });
+    // 1. Setup do Editor 2D
+    const fCanvas = new fabric.Canvas('c2d', { backgroundColor: '#ffffff' });
+    fCanvas.on('after:render', () => { if(tex) tex.needsUpdate = true; });
 
-    // 2. Cena 3D Simples
-    const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0xffffff);
-    const container = document.getElementById('render-3d');
-    const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
-    camera.position.set(0, 0.5, 6);
+    // 2. Setup do 3D ultra-simples
+    const cena = new THREE.Scene();
+    const container = document.getElementById('canvas-3d');
+    const cam = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 100);
+    cam.position.set(0, 0, 5);
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
-    renderer.setSize(container.clientWidth, container.clientHeight);
-    container.appendChild(renderer.domElement);
+    const render = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+    render.setSize(container.clientWidth, container.clientHeight);
+    container.appendChild(render.domElement);
 
-    scene.add(new THREE.AmbientLight(0xffffff, 1.5));
+    cena.add(new THREE.AmbientLight(0xffffff, 1.5));
 
-    // 3. Caneca Sólida (Cilindro Direto)
-    const texture = new THREE.CanvasTexture(fCanvas.getElement());
-    texture.wrapS = THREE.RepeatWrapping;
+    // 3. A Caneca (Cilindro Básico)
+    const tex = new THREE.CanvasTexture(fCanvas.getElement());
+    tex.wrapS = THREE.RepeatWrapping;
 
-    const mugGeo = new THREE.CylinderGeometry(1.1, 1.1, 2.5, 64, 1, false);
-    const mugMat = new THREE.MeshPhongMaterial({ map: texture, color: 0xffffff });
-    const mug = new THREE.Mesh(mugGeo, mugMat);
-    scene.add(mug);
+    // Corpo da Caneca
+    const geo = new THREE.CylinderGeometry(1, 1, 2.2, 32);
+    const mat = new THREE.MeshPhongMaterial({ map: tex });
+    const caneca = new THREE.Mesh(geo, mat);
+    cena.add(caneca);
 
-    // Alça
-    const handleGeo = new THREE.TorusGeometry(0.7, 0.12, 12, 48, Math.PI);
-    const handle = new THREE.Mesh(handleGeo, new THREE.MeshPhongMaterial({color: 0xffffff}));
-    handle.position.set(1.1, 0, 0);
-    handle.rotation.z = -Math.PI/2;
-    scene.add(handle);
+    // Alça (C de caneca)
+    const alcaGeo = new THREE.TorusGeometry(0.6, 0.1, 8, 24, Math.PI);
+    const alca = new THREE.Mesh(alcaGeo, new THREE.MeshPhongMaterial({color:0xffffff}));
+    alca.position.set(1, 0, 0);
+    alca.rotation.z = -Math.PI/2;
+    cena.add(alca);
 
-    // 4. Funções
-    document.getElementById('up-img').onchange = (e) => {
-        const reader = new FileReader();
-        reader.onload = (f) => fabric.Image.fromURL(f.target.result, (img) => {
-            img.scaleToWidth(200); fCanvas.add(img).centerObject(img);
+    // 4. Ações
+    document.getElementById('foto').onchange = (e) => {
+        const r = new FileReader();
+        r.onload = (f) => fabric.Image.fromURL(f.target.result, (i) => {
+            i.scaleToWidth(150); fCanvas.add(i).centerObject(i);
         });
-        reader.readAsDataURL(e.target.files[0]);
+        r.readAsDataURL(e.target.files[0]);
     };
 
-    window.savePreview = () => {
-        fCanvas.discardActiveObject(); fCanvas.renderAll();
-        setTimeout(() => {
-            const a = document.createElement('a');
-            a.download = 'Nostalgicas.png';
-            a.href = renderer.domElement.toDataURL();
-            a.click();
-        }, 100);
-    };
+    document.getElementById('girar').oninput = (e) => tex.offset.x = parseFloat(e.target.value);
 
-    document.getElementById('rot').oninput = (e) => texture.offset.x = parseFloat(e.target.value);
-    document.getElementById('cam-y').oninput = (e) => {
-        camera.position.y = parseFloat(e.target.value);
-        camera.lookAt(0,0,0);
-    };
-
-    function animate() {
-        requestAnimationFrame(animate);
-        renderer.render(scene, camera);
+    function baixar() {
+        const link = document.createElement('a');
+        link.download = 'mockup.png';
+        link.href = render.domElement.toDataURL();
+        link.click();
     }
-    animate();
+
+    function animar() {
+        requestAnimationFrame(animar);
+        caneca.rotation.y += 0.005; // Ela vai girar sozinha para você ver se apareceu!
+        render.render(cena, cam);
+    }
+    animar();
 </script>
 </body>
 </html>
