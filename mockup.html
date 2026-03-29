@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Nostálgicas Studio - Versão Final Limpa</title>
+    <title>Nostálgicas Studio - Mockup Limpo</title>
     <script type="importmap">
       { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js", "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/" } }
     </script>
@@ -35,7 +35,7 @@
     </div>
 
     <div class="controles-manuais">
-        <label style="color: #2e7d32;">🔍 APROXIMAR CÂMERA (ZOOM)</label>
+        <label style="color: #2e7d32;">🔍 ZOOM DA CÂMERA (APROXIMAR)</label>
         <input type="range" id="zoom-camera" min="0.5" max="15" step="0.1" value="5">
 
         <label>GIRAR ENCAIXE DA ARTE</label>
@@ -103,7 +103,7 @@
         });
         scene.add(caneca);
 
-        // Estampa com corte para fugir da alça
+        // Estampa com corte para a alça
         const geo = new THREE.CylinderGeometry((size.x/2)*1.015, (size.x/2)*1.015, size.y*0.85, 64, 1, true, -1.9, 3.8);
         estampa = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ transparent: true, side: THREE.DoubleSide }));
         scene.add(estampa);
@@ -112,7 +112,7 @@
         controls.update();
     });
 
-    // 4. LIGAÇÃO DOS CONTROLES
+    // 4. LIGAÇÃO DOS CONTROLES (SEM ERROS DE TEXTO)
     document.getElementById('zoom-camera').oninput = (e) => {
         camera.position.z = parseFloat(e.target.value);
     };
