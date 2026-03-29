@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nostálgicas - Mockup Studio Pro</title>
+    <title>Nostálgicas - Mockup Studio v4.0</title>
     
     <script type="importmap">
       { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js", "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/" } }
@@ -11,73 +11,67 @@
     <script src="https://unpkg.com/fabric@5.3.0/dist/fabric.min.js"></script>
     
     <style>
-        :root { --blue-rm: #3376e3; --bg-rm: #e9ecef; }
-        body { margin: 0; font-family: 'Segoe UI', sans-serif; display: flex; height: 100vh; background: var(--bg-rm); overflow: hidden; }
+        :root { --blue-rm: #3376e3; --rosa: #ff4081; }
+        body { margin: 0; font-family: 'Segoe UI', sans-serif; display: flex; height: 100vh; overflow: hidden; background: #f8f9fa; }
         
-        /* Layout Lateral */
-        #viewport { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle, #ffffff 0%, #cfd9e1 100%); }
+        /* Área da Caneca */
+        #viewport { flex: 1; position: relative; background: radial-gradient(circle, #ffffff 0%, #d1d9e0 100%); }
+        
+        /* Painel de Opções (Fiel à imagem) */
         #sidebar { width: 380px; background: white; border-left: 1px solid #d1d9e0; display: flex; flex-direction: column; box-shadow: -5px 0 15px rgba(0,0,0,0.05); }
+        .header { padding: 20px; border-bottom: 1px solid #eee; }
+        .header h3 { margin: 0; color: #333; font-size: 16px; text-transform: uppercase; }
 
-        .header-side { padding: 20px; border-bottom: 1px solid #eee; }
-        .header-side h3 { margin: 0; color: #333; font-size: 16px; }
-
-        .tab-container { padding: 20px; flex: 1; overflow-y: auto; }
+        .content { padding: 20px; flex: 1; overflow-y: auto; }
         
-        /* Editor 2D Estilo Rapid Mockup */
-        .canvas-area { 
-            width: 100%; background: #f8f9fa; border: 1px solid #ddd; border-radius: 4px;
-            position: relative; margin-top: 10px; box-sizing: border-box;
+        /* Editor 2D com Alças */
+        .editor-box { 
+            width: 100%; border: 1px solid #ddd; background: #fff; border-radius: 4px;
+            position: relative; margin-top: 10px;
         }
-        .info-dim { position: absolute; top: -20px; right: 0; font-size: 10px; color: #999; }
+        .label-dim { font-size: 10px; color: #999; text-align: right; margin-bottom: 5px; }
 
-        .btn-main { 
-            background: #fff; border: 1px solid #ddd; padding: 10px; width: 100%; 
-            border-radius: 6px; cursor: pointer; font-weight: 500; display: flex; 
-            align-items: center; justify-content: center; gap: 10px; transition: 0.2s;
+        .btn-upload { 
+            background: #fff; border: 1px solid #ddd; padding: 12px; width: 100%; 
+            border-radius: 6px; cursor: pointer; font-weight: bold; display: flex; 
+            align-items: center; justify-content: center; gap: 10px; margin-top: 15px;
         }
-        .btn-main:hover { background: #f0f0f0; }
-        .btn-primary { background: var(--blue-rm); color: white; border: none; margin-top: 20px; }
+        .btn-upload:hover { background: #f0f0f0; }
+        .btn-save { background: var(--blue-rm); color: white; border: none; margin-top: 20px; }
 
-        /* Estilo dos nós de edição (quadradinhos) */
-        .controls-help { font-size: 11px; color: #666; margin-top: 8px; line-height: 1.4; }
+        .footer-logo { padding: 15px; text-align: center; font-size: 12px; color: var(--rosa); font-weight: bold; border-top: 1px solid #eee; }
     </style>
 </head>
 <body>
 
-<div id="viewport">
-    </div>
+<div id="viewport"></div>
 
 <div id="sidebar">
-    <div class="header-side">
-        <h3>Opções de Arte</h3>
-    </div>
+    <div class="header"><h3>Opções de Arte</h3></div>
     
-    <div class="tab-container">
-        <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-            <button class="btn-main" style="border-bottom: 2px solid var(--blue-rm);">Frente</button>
-            <button class="btn-main" disabled style="opacity: 0.5;">Decalque</button>
+    <div class="content">
+        <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+            <button class="btn-upload" style="border-bottom: 2px solid var(--blue-rm); margin:0;">Frente</button>
+            <button class="btn-upload" disabled style="opacity: 0.4; margin:0;">Fundo</button>
         </div>
 
-        <div class="canvas-area">
-            <span class="info-dim">Zoom: 100% | 22.5x9.5cm</span>
-            <canvas id="editor-2d" width="340" height="143"></canvas>
+        <div class="label-dim">Área de Impressão: 22.5 x 9.5 cm</div>
+        <div class="editor-box">
+            <canvas id="canvas-2d" width="340" height="143"></canvas>
         </div>
         
-        <p class="controls-help">
-            • Clique na imagem para selecionar.<br>
-            • Arraste os <b>quadrados brancos</b> para redimensionar.<br>
-            • Segure <b>Shift</b> para manter a proporção.
+        <p style="font-size: 11px; color: #666; margin-top: 10px;">
+            • Arraste os <b>quadrados laterais</b> para esticar a imagem.<br>
+            • Arraste os <b>cantos</b> para redimensionar proporcionalmente.
         </p>
 
-        <input type="file" id="up-file" style="display:none" accept="image/*">
-        <button class="btn-main btn-primary" onclick="document.getElementById('up-file').click()">
-            📂 CARREGAR IMAGEM
+        <input type="file" id="file-selector" style="display:none" accept="image/*">
+        <button class="btn-upload btn-save" onclick="document.getElementById('file-selector').click()">
+            CARREGAR IMAGEM
         </button>
     </div>
     
-    <div style="padding: 20px; border-top: 1px solid #eee;">
-        <button class="btn-main" onclick="alert('Mockup salvo!')">💾 Salvar Mockup</button>
-    </div>
+    <div class="footer-logo">NOSTÁLGICAS PERSONALIZADOS</div>
 </div>
 
 <script type="module">
@@ -85,89 +79,66 @@
     import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
     import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
-    let scene, camera, renderer, controls, mug, decal, fabricCanvas;
+    let scene, camera, renderer, controls, mug, decal, fCanvas;
 
-    // 1. INICIALIZA O EDITOR 2D (FABRIC.JS)
-    function initFabric() {
-        fabricCanvas = new fabric.Canvas('editor-2d', {
-            backgroundColor: '#ffffff',
-            preserveObjectStacking: true
-        });
-
-        // Configuração dos controles para parecer profissional
+    function init() {
+        // --- EDITOR 2D (Fabric.js) ---
+        fCanvas = new fabric.Canvas('canvas-2d', { backgroundColor: '#ffffff' });
+        
+        // Estilo das Alças de ajuste
         fabric.Object.prototype.set({
             transparentCorners: false,
             cornerColor: '#ffffff',
             cornerStrokeColor: '#3376e3',
             borderColor: '#3376e3',
-            cornerSize: 8,
-            borderScaleFactor: 2,
+            cornerSize: 10,
             cornerStyle: 'rect'
         });
 
-        fabricCanvas.on('after:render', update3D);
-    }
+        fCanvas.on('after:render', updateMug);
 
-    // 2. INICIALIZA O MUNDO 3D (THREE.JS)
-    function init3D() {
+        // --- MUNDO 3D (Three.js) ---
         scene = new THREE.Scene();
-        
         camera = new THREE.PerspectiveCamera(30, (window.innerWidth - 380) / window.innerHeight, 0.1, 1000);
-        camera.position.set(0, 0.4, 3.2);
-
+        
         renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
         renderer.setSize(window.innerWidth - 380, window.innerHeight);
         renderer.setPixelRatio(window.devicePixelRatio);
         renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        renderer.toneMappingExposure = 1.2;
         document.getElementById('viewport').appendChild(renderer.domElement);
 
-        // Iluminação de Estúdio (Três pontos de luz para realismo)
-        const ambient = new THREE.AmbientLight(0xffffff, 0.8);
-        scene.add(ambient);
-
-        const fillLight = new THREE.PointLight(0xffffff, 0.5);
-        fillLight.position.set(-5, 3, 2);
-        scene.add(fillLight);
-
-        const keyLight = new THREE.DirectionalLight(0xffffff, 1);
-        keyLight.position.set(5, 5, 5);
-        scene.add(keyLight);
+        const light = new THREE.AmbientLight(0xffffff, 1.2);
+        scene.add(light);
+        const dirLight = new THREE.DirectionalLight(0xffffff, 1);
+        dirLight.position.set(5, 5, 5);
+        scene.add(dirLight);
 
         controls = new OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
-        controls.minDistance = 2;
-        controls.maxDistance = 5;
 
-        // Carrega o Modelo
         new GLTFLoader().load('caneca.glb', (gltf) => {
             mug = gltf.scene;
             const box = new THREE.Box3().setFromObject(mug);
-            const center = box.getCenter(new THREE.Vector3());
             const size = box.getSize(new THREE.Vector3());
+            const center = box.getCenter(new THREE.Vector3());
             mug.position.sub(center);
 
-            // Material cerâmico de alto brilho
-            mug.traverse(n => {
-                if(n.isMesh) {
-                    n.material = new THREE.MeshPhysicalMaterial({
-                        color: 0xffffff,
-                        roughness: 0.1,
-                        metalness: 0,
-                        clearcoat: 1.0,
-                        clearcoatRoughness: 0.05
+            // Zoom Automático com base no tamanho do seu arquivo
+            camera.position.set(0, 0, size.z * 3.5);
+
+            mug.traverse(child => {
+                if(child.isMesh) {
+                    child.material = new THREE.MeshPhysicalMaterial({ 
+                        color: 0xffffff, roughness: 0.1, metalness: 0, clearcoat: 1 
                     });
                 }
             });
             scene.add(mug);
 
-            // Área da Estampa (Cilindro matemático preciso)
+            // Área da Estampa (Cilindro matemático)
             const geo = new THREE.CylinderGeometry(size.x/1.96, size.x/1.96, size.y*0.89, 64, 1, true, -Math.PI/1.5, Math.PI*1.33);
             decal = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ 
-                transparent: true, 
-                side: THREE.DoubleSide,
-                polygonOffset: true,
-                polygonOffsetFactor: -1
+                transparent: true, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -1 
             }));
             decal.rotation.y = Math.PI / 2;
             scene.add(decal);
@@ -176,34 +147,31 @@
         animate();
     }
 
-    function update3D() {
+    function updateMug() {
         if (!decal) return;
-        const dataURL = fabricCanvas.toDataURL({ format: 'png', quality: 1 });
+        const dataURL = fCanvas.toDataURL({ format: 'png', quality: 1 });
         new THREE.TextureLoader().load(dataURL, (tex) => {
-            tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
             decal.material.map = tex;
             decal.material.needsUpdate = true;
         });
     }
 
-    // Upload de Imagem
-    document.getElementById('up-file').addEventListener('change', (e) => {
-        const file = e.target.files[0];
+    document.getElementById('file-selector').addEventListener('change', (e) => {
         const reader = new FileReader();
         reader.onload = (f) => {
             fabric.Image.fromURL(f.target.result, (img) => {
                 img.scaleToHeight(143);
                 img.set({ left: 10, top: 0 });
-                fabricCanvas.add(img);
-                fabricCanvas.setActiveObject(img);
+                fCanvas.add(img);
+                fCanvas.setActiveObject(img);
             });
         };
-        reader.readAsDataURL(file);
+        reader.readAsDataURL(e.target.files[0]);
     });
 
     function animate() {
         requestAnimationFrame(animate);
-        if(controls) controls.update();
+        controls.update();
         renderer.render(scene, camera);
     }
 
@@ -214,8 +182,7 @@
         renderer.setSize(w, window.innerHeight);
     });
 
-    initFabric();
-    init3D();
+    init();
 </script>
 </body>
 </html>
