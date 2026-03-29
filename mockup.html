@@ -35,6 +35,8 @@
     </div>
 
     <div class="controles-manuais">
+        <label>Girar Caneca (Posição da Alça)</label>
+<input type="range" id="girar-caneca" min="-3.14" max="3.14" step="0.01" value="0">
         <label>Girar Arte (Ajuste Fino)</label>
         <input type="range" id="rotacao" min="-3.14" max="3.14" step="0.01" value="0">
         
@@ -158,6 +160,11 @@
         renderer.render(scene, camera);
     }
     animate();
-</script>
+</script// Este comando gira o objeto da caneca inteira
+document.getElementById('girar-caneca').addEventListener('input', (e) => {
+    if (caneca) {
+        caneca.rotation.y = parseFloat(e.target.value);
+    }
+});>
 </body>
 </html>
