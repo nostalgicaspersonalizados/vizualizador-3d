@@ -3,52 +3,106 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nostálgicas - Studio Pro (Correção Definitiva)</title>
+    <title>Nostálgicas Studio Pro | Editor de Canecas</title>
     
     <script type="importmap">
-      { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js", "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/" } }
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+          "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+        }
+      }
     </script>
     <script src="https://unpkg.com/fabric@5.3.0/dist/fabric.min.js"></script>
     
     <style>
-        :root { --rosa: #ff4081; --blue: #3376e3; --bg: #f4f7fa; }
-        body { margin: 0; font-family: 'Segoe UI', sans-serif; display: flex; height: 100vh; background: var(--bg); overflow: hidden; }
-        
-        /* Área do 3D (Centralizado) */
-        #viewport { flex: 1; position: relative; background: radial-gradient(circle, #ffffff 0%, #cbd5e0 100%); }
-        
-        /* Painel Lateral Estilo Rapid Mockup */
-        #sidebar { width: 380px; background: white; border-left: 1px solid #d1d9e0; display: flex; flex-direction: column; padding: 20px; box-sizing: border-box; box-shadow: -5px 0 15px rgba(0,0,0,0.05); z-index: 10; }
-        h3 { margin: 0 0 15px 0; color: #333; font-size: 16px; text-transform: uppercase; border-bottom: 2px solid var(--rosa); padding-bottom: 10px; }
-        
-        .editor-box { width: 100%; border: 1px solid #ddd; background: #fff; border-radius: 4px; margin-bottom: 15px; position: relative; }
-        .label-dim { position: absolute; top: -18px; right: 0; font-size: 10px; color: #999; }
+        :root {
+            --primary: #3376e3;
+            --accent: #ff4081;
+            --sidebar-bg: #ffffff;
+            --viewport-bg: #e2e8f0;
+            --text-main: #2d3748;
+        }
 
-        .btn-main { background: var(--blue); color: white; border: none; padding: 15px; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; text-transform: uppercase; font-size: 14px; }
-        .instruction { font-size: 11px; color: #666; line-height: 1.5; margin-top: 10px; }
+        body, html { margin: 0; padding: 0; height: 100vh; font-family: 'Inter', 'Segoe UI', sans-serif; overflow: hidden; color: var(--text-main); }
+
+        /* Layout Principal */
+        #app-container { display: flex; width: 100vw; height: 100vh; }
+
+        /* Visualizador 3D */
+        #viewport-container { flex: 1; position: relative; background: radial-gradient(circle, #ffffff 0%, #cbd5e0 100%); display: flex; align-items: center; justify-content: center; }
+        
+        /* Painel Lateral */
+        #sidebar { width: 400px; background: var(--sidebar-bg); border-left: 1px solid #e2e8f0; display: flex; flex-direction: column; box-shadow: -4px 0 10px rgba(0,0,0,0.05); z-index: 100; }
+
+        .sidebar-header { padding: 25px; border-bottom: 1px solid #edf2f7; }
+        .sidebar-header h1 { margin: 0; font-size: 18px; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 1px; }
+
+        .sidebar-content { padding: 20px; flex: 1; overflow-y: auto; }
+
+        /* Editor 2D (Fabric) */
+        .editor-wrapper { background: #f7fafc; border: 2px dashed #cbd5e0; border-radius: 8px; position: relative; margin-top: 10px; overflow: hidden; }
+        .editor-label { font-size: 11px; color: #718096; margin-bottom: 8px; font-weight: 600; text-transform: uppercase; }
+
+        /* Botões Estilizados */
+        .btn { border: none; border-radius: 6px; padding: 14px 20px; font-weight: 700; font-size: 14px; cursor: pointer; transition: all 0.2s; width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .btn-upload { background: var(--primary); color: white; margin-bottom: 25px; }
+        .btn-upload:hover { background: #2b6cb0; transform: translateY(-1px); }
+        .btn-clear { background: #edf2f7; color: #4a5568; margin-top: 15px; }
+        .btn-clear:hover { background: #e2e8f0; }
+
+        /* Instruções */
+        .help-box { background: #fffaf0; border-left: 4px solid #ed8936; padding: 15px; margin-top: 20px; border-radius: 4px; }
+        .help-box p { margin: 0 0 8px 0; font-size: 12px; line-height: 1.4; color: #7b341e; }
+
+        /* Overlay de Carregamento */
+        #loader { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: white; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; transition: opacity 0.5s; }
+        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
-<div id="viewport"></div>
+<div id="loader">
+    <div class="spinner"></div>
+    <p style="margin-top: 15px; font-weight: 600; color: #4a5568;">Preparando Studio 3D...</p>
+</div>
 
-<div id="sidebar">
-    <h3>Opções de Arte</h3>
-    <input type="file" id="up-image" style="display:none" accept="image/*">
-    <button class="btn-main" onclick="document.getElementById('up-image').click()">📂 Carregar Imagem</button>
+<div id="app-container">
+    <div id="viewport-container">
+        </div>
 
-    <p style="font-size: 10px; color: #999; margin: 20px 0 5px;">Área de Trabalho (22.5 x 9.5cm):</p>
-    <div class="editor-box">
-        <span class="label-dim">DAS: 100%</span>
-        <canvas id="c2d" width="340" height="143"></canvas>
-    </div>
+    <aside id="sidebar">
+        <div class="sidebar-header">
+            <h1>Opções de Arte</h1>
+        </div>
 
-    <div class="instruction">
-        • Clique na foto para mostrar as alças.<br>
-        • Arraste os <b>quadrados das laterais</b> para ESTICAR a arte.<br>
-        • Arraste os quadrados dos cantos para escala total.<br>
-        • A caneca 3D atualiza automaticamente.
-    </div>
+        <div class="sidebar-content">
+            <input type="file" id="image-upload" style="display: none;" accept="image/*">
+            <button class="btn btn-upload" onclick="document.getElementById('image-upload').click()">
+                <span>📂</span> CARREGAR ESTAMPA
+            </button>
+
+            <div class="editor-label">Área de Ajuste (22.5 x 9.5cm)</div>
+            <div class="editor-wrapper">
+                <canvas id="fabric-canvas" width="358" height="151"></canvas>
+            </div>
+
+            <div class="help-box">
+                <p><strong>Dica de Ajuste:</strong></p>
+                <p>• Clique na imagem para selecionar.</p>
+                <p>• Use os <strong>quadrados laterais</strong> para esticar a largura.</p>
+                <p>• Use os <strong>quadrados superiores/inferiores</strong> para a altura.</p>
+                <p>• A caneca 3D atualiza instantaneamente.</p>
+            </div>
+
+            <button class="btn btn-clear" onclick="limparEditor()">Limpar Arte</button>
+        </div>
+
+        <div style="padding: 20px; font-size: 10px; color: #a0aec0; text-align: center; border-top: 1px solid #edf2f7;">
+            NOSTÁLGICAS PERSONALIZADOS &copy; 2026
+        </div>
+    </aside>
 </div>
 
 <script type="module">
@@ -56,111 +110,130 @@
     import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
     import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
-    let scene, camera, renderer, controls, mug, decal, fCanvas;
+    // Variáveis Globais
+    let scene, camera, renderer, controls, mug, estampaMesh, fCanvas;
+    const SIDEBAR_WIDTH = 400;
 
-    // 1. Configuração do Editor 2D (Fabric.js) para ESTICAR LIVREMENTE
+    // 1. Inicializa o Editor 2D (Fabric.js)
     function initFabric() {
-        fCanvas = new fabric.Canvas('c2d', { backgroundColor: '#ffffff', preserveObjectStacking: true });
-        
-        // Estilo das alças (quadradinhos)
+        fCanvas = new fabric.Canvas('fabric-canvas', {
+            backgroundColor: '#ffffff',
+            preserveObjectStacking: true
+        });
+
+        // Configuração Global das Alças de Esticar
         fabric.Object.prototype.set({
             transparentCorners: false,
             cornerColor: '#3376e3',
+            cornerStrokeColor: '#ffffff',
+            borderColor: '#3376e3',
             cornerSize: 10,
             cornerStyle: 'rect',
-            borderColor: '#3376e3'
+            borderScaleFactor: 2,
+            lockUniScaling: false // ISSO PERMITE ESTICAR LIVREMENTE (Não uniforme)
         });
 
-        // Sincroniza o editor visual com o 3D
-        fCanvas.on('after:render', updateMugTexture);
+        // Evento: Sempre que o editor mudar, atualiza a caneca 3D
+        fCanvas.on('after:render', () => {
+            if (estampaMesh && estampaMesh.material.map) {
+                const dataURL = fCanvas.toDataURL({ format: 'png', quality: 1 });
+                new THREE.TextureLoader().load(dataURL, (tex) => {
+                    tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+                    estampaMesh.material.map = tex;
+                    estampaMesh.material.needsUpdate = true;
+                });
+            }
+        });
     }
 
-    // 2. Configuração do 3D (Three.js) com Centralização Forçada
-    function init3D() {
+    // 2. Inicializa o Cenário 3D (Three.js)
+    function initThree() {
         scene = new THREE.Scene();
-        camera = new THREE.PerspectiveCamera(30, (window.innerWidth - 380) / window.innerHeight, 0.1, 1000);
-        
+
+        // Câmera
+        camera = new THREE.PerspectiveCamera(35, (window.innerWidth - SIDEBAR_WIDTH) / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 0, 4.5);
+
+        // Renderer
         renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-        renderer.setSize(window.innerWidth - 380, window.innerHeight);
+        renderer.setSize(window.innerWidth - SIDEBAR_WIDTH, window.innerHeight);
         renderer.setPixelRatio(window.devicePixelRatio);
-        document.getElementById('viewport').appendChild(renderer.domElement);
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.2;
+        document.getElementById('viewport-container').appendChild(renderer.domElement);
 
-        scene.add(new THREE.AmbientLight(0xffffff, 1.3));
-        const sun = new THREE.DirectionalLight(0xffffff, 0.7);
-        sun.position.set(5, 5, 5);
-        scene.add(sun);
-
+        // Controles
         controls = new OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
+        controls.minDistance = 2;
+        controls.maxDistance = 7;
 
-        new OBJLoader().load('mug.obj', (obj) => {
-            mug = obj;
+        // Luzes
+        const ambLight = new THREE.AmbientLight(0xffffff, 1.0);
+        scene.add(ambLight);
+
+        const spot1 = new THREE.SpotLight(0xffffff, 100);
+        spot1.position.set(5, 10, 5);
+        scene.add(spot1);
+
+        const spot2 = new THREE.SpotLight(0xffffff, 50);
+        spot2.position.set(-5, 5, -5);
+        scene.add(spot2);
+
+        // Carregar mug.obj
+        const loader = new OBJLoader();
+        loader.load('mug.obj', (object) => {
+            mug = object;
             
-            // --- CORREÇÃO 1: CENTRALIZAÇÃO FORÇADA ---
-            // Isso ignora o ponto de origem do arquivo e força o centro geométrico
+            // NORMALIZAÇÃO GEOMÉTRICA (Correção de Posição)
             const box = new THREE.Box3().setFromObject(mug);
             const center = box.getCenter(new THREE.Vector3());
-            mug.position.sub(center);
-            
-            // Foca a câmera baseado no tamanho real do objeto centralizado
             const size = box.getSize(new THREE.Vector3());
-            camera.position.set(0, size.y / 2, size.z * 3.8);
-            controls.target.set(0, size.y / 2, 0);
+            
+            // Move a malha para o centro real (0,0,0)
+            mug.position.x += (mug.position.x - center.x);
+            mug.position.y += (mug.position.y - center.y);
+            mug.position.z += (mug.position.z - center.z);
 
-            mug.traverse(child => {
+            // Material da Caneca (Brilho Cerâmico)
+            mug.traverse((child) => {
                 if (child.isMesh) {
                     child.material = new THREE.MeshPhysicalMaterial({
-                        color: 0xffffff, roughness: 0.15, metalness: 0, clearcoat: 1
+                        color: 0xffffff,
+                        roughness: 0.1,
+                        metalness: 0,
+                        clearcoat: 1.0,
+                        clearcoatRoughness: 0.05
                     });
                 }
             });
+
             scene.add(mug);
 
-            // Camada de Estampa (Cilindro de Envelopamento Frontal)
-            const geo = new THREE.CylinderGeometry(size.x/1.97, size.x/1.97, size.y*0.89, 64, 1, true, -Math.PI/1.5, Math.PI*1.33);
-            decal = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ 
-                transparent: true, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -1 
-            }));
-            decal.rotation.y = Math.PI / 2;
-            scene.add(decal);
+            // Criar a área da estampa (Fiel aos 22.5 x 9.5)
+            // Ajustado para o raio do seu mug.obj
+            const radius = size.x / 1.97;
+            const height = size.y * 0.88;
+            const geometry = new THREE.CylinderGeometry(radius, radius, height, 64, 1, true, -Math.PI/1.5, Math.PI*1.33);
+            
+            const material = new THREE.MeshStandardMaterial({
+                transparent: true,
+                side: THREE.DoubleSide,
+                polygonOffset: true,
+                polygonOffsetFactor: -1
+            });
+
+            estampaMesh = new THREE.Mesh(geometry, material);
+            estampaMesh.rotation.y = Math.PI / 2;
+            scene.add(estampaMesh);
+
+            // Remover Loader
+            document.getElementById('loader').style.opacity = '0';
+            setTimeout(() => document.getElementById('loader').remove(), 500);
         });
 
         animate();
     }
-
-    // Transfere a imagem do editor 2D para a caneca 3D
-    function updateMugTexture() {
-        if (!decal) return;
-        const dataURL = fCanvas.toDataURL({ format: 'png', quality: 1 });
-        new THREE.TextureLoader().load(dataURL, (tex) => {
-            decal.material.map = tex;
-            decal.material.needsUpdate = true;
-        });
-    }
-
-    document.getElementById('up-image').addEventListener('change', (e) => {
-        const reader = new FileReader();
-        reader.onload = (f) => {
-            fabric.Image.fromURL(f.target.result, (img) => {
-                
-                // --- CORREÇÃO 2: REDIMENSIONAMENTO LIVRE ---
-                // Travamos apenas o redimensionamento uniforme (cantos).
-                // As alças laterais agora permitem ESTICAR sem manter a proporção.
-                img.set({
-                    left: 10,
-                    top: 10,
-                    lockUniScaling: false, // Permite distorção livre
-                    cornerStyle: 'rect',
-                    transparentCorners: false
-                });
-                img.scaleToHeight(140);
-                
-                fCanvas.add(img);
-                fCanvas.setActiveObject(img);
-            });
-        };
-        reader.readAsDataURL(e.target.files[0]);
-    });
 
     function animate() {
         requestAnimationFrame(animate);
@@ -168,15 +241,45 @@
         renderer.render(scene, camera);
     }
 
+    // Carregar Imagem no Editor
+    document.getElementById('image-upload').addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            fabric.Image.fromURL(event.target.result, (img) => {
+                // Configuração inicial da imagem
+                img.scaleToHeight(140);
+                img.set({
+                    left: 20,
+                    top: 5,
+                    hasRotatingPoint: true
+                });
+                
+                fCanvas.add(img);
+                fCanvas.setActiveObject(img);
+            });
+        };
+        reader.readAsDataURL(file);
+    });
+
+    window.limparEditor = () => {
+        fCanvas.clear();
+        fCanvas.setBackgroundColor('#ffffff', fCanvas.renderAll.bind(fCanvas));
+    };
+
+    // Redimensionamento de Janela
     window.addEventListener('resize', () => {
-        const w = window.innerWidth - 380;
+        const w = window.innerWidth - SIDEBAR_WIDTH;
         camera.aspect = w / window.innerHeight;
         camera.updateProjectionMatrix();
         renderer.setSize(w, window.innerHeight);
     });
 
+    // Iniciar tudo
     initFabric();
-    init3D();
+    initThree();
 </script>
 </body>
 </html>
