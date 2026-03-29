@@ -3,74 +3,75 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nostálgicas Studio - Oficial</title>
+    <title>Nostálgicas Studio - Preview 3D</title>
     
-    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/controls/OrbitControls.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/loaders/GLTFLoader.js"></script>
-    <script src="https://unpkg.com/fabric@5.3.0/dist/fabric.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
     
     <style>
-        body { margin: 0; display: flex; height: 100vh; font-family: sans-serif; background: #111; color: white; overflow: hidden; }
+        body { margin: 0; display: flex; height: 100vh; font-family: sans-serif; background: #000; overflow: hidden; }
         #render-3d { flex: 1; background: #ffffff; position: relative; }
-        #sidebar { width: 340px; background: #1a1a1a; padding: 20px; border-left: 1px solid #444; }
-        .canvas-area { background: #fff; margin-bottom: 20px; border: 2px solid #2ecc71; }
-        .btn { width: 100%; padding: 12px; margin-bottom: 10px; cursor: pointer; font-weight: bold; border: none; text-transform: uppercase; border-radius: 4px; }
-        .btn-save { background: #2ecc71; color: white; }
-        #status-log { position: absolute; top: 10px; left: 10px; color: #333; font-weight: bold; background: rgba(255,255,255,0.7); padding: 5px; z-index: 100; }
-        input[type="range"] { width: 100%; accent-color: #2ecc71; margin-bottom: 15px; }
+        #sidebar { width: 320px; background: #111; padding: 20px; color: #fff; border-left: 1px solid #444; }
+        .canvas-area { background: #fff; margin-bottom: 15px; border: 2px solid #2ecc71; }
+        .btn { width: 100%; padding: 12px; margin-bottom: 8px; cursor: pointer; font-weight: bold; border: none; text-transform: uppercase; border-radius: 4px; }
+        #status-msg { position: absolute; top: 10px; left: 10px; color: #000; font-weight: bold; background: #ffff00; padding: 5px; z-index: 999; }
     </style>
 </head>
 <body>
 
 <div id="render-3d">
-    <div id="status-log">Carregando bibliotecas...</div>
+    <div id="status-msg">STATUS: CARREGANDO...</div>
 </div>
 
 <aside id="sidebar">
-    <h2 style="color: #2ecc71; margin-top: 0;">Nostálgicas Studio</h2>
+    <h3 style="color: #2ecc71;">NOSTÁLGICAS STUDIO</h3>
     <div class="canvas-area">
-        <canvas id="canvas2d" width="450" height="190" style="width: 100%; height: auto;"></canvas>
+        <canvas id="canvas2d" width="450" height="190" style="width: 100%;"></canvas>
     </div>
+    
     <input type="file" id="up-img" style="display:none" accept="image/*">
-    <button class="btn" style="background:#444; color:#fff" onclick="document.getElementById('up-img').click()">Inserir Imagem</button>
-    <button class="btn btn-save" onclick="savePreview()">Baixar Foto</button>
-    <label style="font-size: 10px; color: #888;">GIRAR ARTE</label>
-    <input type="range" id="rot" min="-0.5" max="0.5" step="0.001" value="0">
+    <button class="btn" style="background:#444; color:#fff" onclick="document.getElementById('up-img').click()">Inserir Arte</button>
+    <button class="btn" style="background:#2ecc71; color:#fff" onclick="takePhoto()">Salvar Foto</button>
+    
+    <div style="margin-top:20px; border-top: 1px solid #333; padding-top: 10px;">
+        <label style="font-size:10px;">GIRAR ESTAMPA</label>
+        <input type="range" id="rot" min="-0.5" max="0.5" step="0.001" value="0" style="width:100%">
+    </div>
 </aside>
 
 <script>
-    const log = document.getElementById('status-log');
+    const status = document.getElementById('status-msg');
 
     // 1. Editor 2D
     const fCanvas = new fabric.Canvas('canvas2d', { backgroundColor: '#ffffff' });
     fCanvas.on('after:render', () => { if(texture3d) texture3d.needsUpdate = true; });
 
-    // 2. Cena 3D
+    // 2. Cena 3D Simples
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0xffffff);
     const container = document.getElementById('render-3d');
-    const camera = new THREE.PerspectiveCamera(40, container.clientWidth / container.clientHeight, 0.1, 1000);
-    camera.position.set(0, 0, 6);
+    const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
+    camera.position.set(0, 0, 5);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
     renderer.setSize(container.clientWidth, container.clientHeight);
-    renderer.setPixelRatio(window.devicePixelRatio);
     container.appendChild(renderer.domElement);
 
     const controls = new THREE.OrbitControls(camera, renderer.domElement);
     scene.add(new THREE.AmbientLight(0xffffff, 2));
 
     const texture3d = new THREE.CanvasTexture(fCanvas.getElement());
-    texture3d.colorSpace = THREE.SRGBColorSpace;
 
-    // 3. CARREGAMENTO DO MUG.GLB
-    log.innerText = "Procurando arquivo mug.glb...";
+    // 3. Carregamento do Arquivo mug.glb
     const loader = new THREE.GLTFLoader();
     
-    loader.load('./mug.glb', (gltf) => {
-        log.innerText = "Sucesso! Caneca carregada.";
-        log.style.color = "green";
+    // Tentamos carregar o arquivo mug.glb
+    loader.load('mug.glb', function(gltf) {
+        status.innerText = "STATUS: CANECA OK!";
+        status.style.background = "#00ff00";
+        
         const model = gltf.scene;
         model.traverse((child) => {
             if (child.isMesh) {
@@ -81,19 +82,30 @@
                 });
             }
         });
+        
+        // Garante que a caneca apareça no tamanho certo
         const box = new THREE.Box3().setFromObject(model);
-        model.position.sub(box.getCenter(new THREE.Vector3()));
+        const size = box.getSize(new THREE.Vector3()).length();
+        const center = box.getCenter(new THREE.Vector3());
+        
+        model.position.x += (model.position.x - center.x);
+        model.position.y += (model.position.y - center.y);
+        model.position.z += (model.position.z - center.z);
+        
+        // Se a caneca for muito pequena, aumenta ela automaticamente
+        if(size < 1) model.scale.set(10, 10, 10);
+        
         scene.add(model);
     }, 
-    (xhr) => {
-        log.innerText = "Baixando caneca: " + Math.round((xhr.loaded / xhr.total * 100)) + "%";
-    }, 
-    (err) => {
-        log.innerText = "ERRO: O arquivo 'mug.glb' não foi encontrado!";
-        log.style.color = "red";
+    undefined, 
+    function(err) {
+        console.error(err);
+        status.innerText = "ERRO: O ARQUIVO 'mug.glb' NÃO FOI ENCONTRADO!";
+        status.style.background = "#ff0000";
+        status.style.color = "#fff";
     });
 
-    // 4. Funções
+    // 4. Ações
     document.getElementById('up-img').onchange = (e) => {
         const reader = new FileReader();
         reader.onload = (f) => fabric.Image.fromURL(f.target.result, (img) => {
@@ -102,11 +114,11 @@
         reader.readAsDataURL(e.target.files[0]);
     };
 
-    window.savePreview = () => {
+    window.takePhoto = () => {
         fCanvas.discardActiveObject(); fCanvas.renderAll();
         setTimeout(() => {
             const a = document.createElement('a');
-            a.download = 'Mockup_Nostalgicas.png';
+            a.download = 'Preview_Caneca.png';
             a.href = renderer.domElement.toDataURL();
             a.click();
         }, 100);
