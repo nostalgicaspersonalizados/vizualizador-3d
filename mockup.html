@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nostálgicas - Studio Pro (OBJ)</title>
+    <title>Nostálgicas - Studio Pro (Correção Definitiva)</title>
     
     <script type="importmap">
       { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js", "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/" } }
@@ -11,13 +11,20 @@
     <script src="https://unpkg.com/fabric@5.3.0/dist/fabric.min.js"></script>
     
     <style>
-        :root { --rosa: #ff4081; --blue: #3376e3; }
-        body { margin: 0; font-family: 'Segoe UI', sans-serif; display: flex; height: 100vh; background: #f4f7fa; overflow: hidden; }
-        #viewport { flex: 1; position: relative; background: radial-gradient(circle, #ffffff 0%, #d1d9e0 100%); }
-        #sidebar { width: 380px; background: white; border-left: 1px solid #d1d9e0; display: flex; flex-direction: column; padding: 20px; box-sizing: border-box; box-shadow: -5px 0 15px rgba(0,0,0,0.05); }
+        :root { --rosa: #ff4081; --blue: #3376e3; --bg: #f4f7fa; }
+        body { margin: 0; font-family: 'Segoe UI', sans-serif; display: flex; height: 100vh; background: var(--bg); overflow: hidden; }
+        
+        /* Área do 3D (Centralizado) */
+        #viewport { flex: 1; position: relative; background: radial-gradient(circle, #ffffff 0%, #cbd5e0 100%); }
+        
+        /* Painel Lateral Estilo Rapid Mockup */
+        #sidebar { width: 380px; background: white; border-left: 1px solid #d1d9e0; display: flex; flex-direction: column; padding: 20px; box-sizing: border-box; box-shadow: -5px 0 15px rgba(0,0,0,0.05); z-index: 10; }
         h3 { margin: 0 0 15px 0; color: #333; font-size: 16px; text-transform: uppercase; border-bottom: 2px solid var(--rosa); padding-bottom: 10px; }
-        .editor-box { width: 100%; border: 1px solid #ddd; background: #fff; border-radius: 4px; margin-bottom: 15px; }
-        .btn-main { background: var(--blue); color: white; border: none; padding: 15px; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; text-transform: uppercase; }
+        
+        .editor-box { width: 100%; border: 1px solid #ddd; background: #fff; border-radius: 4px; margin-bottom: 15px; position: relative; }
+        .label-dim { position: absolute; top: -18px; right: 0; font-size: 10px; color: #999; }
+
+        .btn-main { background: var(--blue); color: white; border: none; padding: 15px; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; text-transform: uppercase; font-size: 14px; }
         .instruction { font-size: 11px; color: #666; line-height: 1.5; margin-top: 10px; }
     </style>
 </head>
@@ -30,14 +37,16 @@
     <input type="file" id="up-image" style="display:none" accept="image/*">
     <button class="btn-main" onclick="document.getElementById('up-image').click()">📂 Carregar Imagem</button>
 
-    <p style="font-size: 10px; color: #999; margin: 15px 0 5px;">Área de Trabalho (22.5 x 9.5cm):</p>
+    <p style="font-size: 10px; color: #999; margin: 20px 0 5px;">Área de Trabalho (22.5 x 9.5cm):</p>
     <div class="editor-box">
+        <span class="label-dim">DAS: 100%</span>
         <canvas id="c2d" width="340" height="143"></canvas>
     </div>
 
     <div class="instruction">
-        • Use os <b>quadrados laterais</b> para esticar a arte.<br>
-        • Use os <b>quadrados dos cantos</b> para escala total.<br>
+        • Clique na foto para mostrar as alças.<br>
+        • Arraste os <b>quadrados das laterais</b> para ESTICAR a arte.<br>
+        • Arraste os quadrados dos cantos para escala total.<br>
         • A caneca 3D atualiza automaticamente.
     </div>
 </div>
@@ -49,19 +58,24 @@
 
     let scene, camera, renderer, controls, mug, decal, fCanvas;
 
-    // 1. Configuração do Editor 2D (Fabric.js) para esticar arte
+    // 1. Configuração do Editor 2D (Fabric.js) para ESTICAR LIVREMENTE
     function initFabric() {
-        fCanvas = new fabric.Canvas('c2d', { backgroundColor: '#ffffff' });
+        fCanvas = new fabric.Canvas('c2d', { backgroundColor: '#ffffff', preserveObjectStacking: true });
+        
+        // Estilo das alças (quadradinhos)
         fabric.Object.prototype.set({
             transparentCorners: false,
             cornerColor: '#3376e3',
             cornerSize: 10,
-            cornerStyle: 'rect'
+            cornerStyle: 'rect',
+            borderColor: '#3376e3'
         });
+
+        // Sincroniza o editor visual com o 3D
         fCanvas.on('after:render', updateMugTexture);
     }
 
-    // 2. Configuração do 3D para mug.obj
+    // 2. Configuração do 3D (Three.js) com Centralização Forçada
     function init3D() {
         scene = new THREE.Scene();
         camera = new THREE.PerspectiveCamera(30, (window.innerWidth - 380) / window.innerHeight, 0.1, 1000);
@@ -71,36 +85,39 @@
         renderer.setPixelRatio(window.devicePixelRatio);
         document.getElementById('viewport').appendChild(renderer.domElement);
 
-        scene.add(new THREE.AmbientLight(0xffffff, 1.2));
-        const sun = new THREE.DirectionalLight(0xffffff, 0.8);
+        scene.add(new THREE.AmbientLight(0xffffff, 1.3));
+        const sun = new THREE.DirectionalLight(0xffffff, 0.7);
         sun.position.set(5, 5, 5);
         scene.add(sun);
 
         controls = new OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
 
-        // CARREGANDO O NOVO ARQUIVO MUG.OBJ
         new OBJLoader().load('mug.obj', (obj) => {
             mug = obj;
+            
+            // --- CORREÇÃO 1: CENTRALIZAÇÃO FORÇADA ---
+            // Isso ignora o ponto de origem do arquivo e força o centro geométrico
             const box = new THREE.Box3().setFromObject(mug);
-            const size = box.getSize(new THREE.Vector3());
             const center = box.getCenter(new THREE.Vector3());
-            mug.position.sub(center); // Centraliza o modelo
-
-            // Ajusta a câmera para o tamanho do mug.obj
-            camera.position.set(0, 0, size.z * 3.8);
+            mug.position.sub(center);
+            
+            // Foca a câmera baseado no tamanho real do objeto centralizado
+            const size = box.getSize(new THREE.Vector3());
+            camera.position.set(0, size.y / 2, size.z * 3.8);
+            controls.target.set(0, size.y / 2, 0);
 
             mug.traverse(child => {
                 if (child.isMesh) {
                     child.material = new THREE.MeshPhysicalMaterial({
-                        color: 0xffffff, roughness: 0.1, metalness: 0, clearcoat: 1
+                        color: 0xffffff, roughness: 0.15, metalness: 0, clearcoat: 1
                     });
                 }
             });
             scene.add(mug);
 
-            // Camada de Estampa (Cilindro de Envelopamento)
-            const geo = new THREE.CylinderGeometry(size.x/1.96, size.x/1.96, size.y*0.88, 64, 1, true, -Math.PI/1.5, Math.PI*1.33);
+            // Camada de Estampa (Cilindro de Envelopamento Frontal)
+            const geo = new THREE.CylinderGeometry(size.x/1.97, size.x/1.97, size.y*0.89, 64, 1, true, -Math.PI/1.5, Math.PI*1.33);
             decal = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ 
                 transparent: true, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -1 
             }));
@@ -111,6 +128,7 @@
         animate();
     }
 
+    // Transfere a imagem do editor 2D para a caneca 3D
     function updateMugTexture() {
         if (!decal) return;
         const dataURL = fCanvas.toDataURL({ format: 'png', quality: 1 });
@@ -124,8 +142,19 @@
         const reader = new FileReader();
         reader.onload = (f) => {
             fabric.Image.fromURL(f.target.result, (img) => {
+                
+                // --- CORREÇÃO 2: REDIMENSIONAMENTO LIVRE ---
+                // Travamos apenas o redimensionamento uniforme (cantos).
+                // As alças laterais agora permitem ESTICAR sem manter a proporção.
+                img.set({
+                    left: 10,
+                    top: 10,
+                    lockUniScaling: false, // Permite distorção livre
+                    cornerStyle: 'rect',
+                    transparentCorners: false
+                });
                 img.scaleToHeight(140);
-                img.set({ left: 10, top: 0 });
+                
                 fCanvas.add(img);
                 fCanvas.setActiveObject(img);
             });
