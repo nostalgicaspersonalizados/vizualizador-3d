@@ -2,35 +2,37 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Nostálgicas - Simples e Funcional</title>
+    <title>Nostálgicas Studio - Oficial</title>
     <script type="importmap">
       { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js", "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/" } }
     </script>
     <script src="https://unpkg.com/fabric@5.3.0/dist/fabric.min.js"></script>
     <style>
-        body { margin: 0; display: flex; height: 100vh; font-family: sans-serif; background: #f0f0f0; }
+        body { margin: 0; display: flex; height: 100vh; font-family: sans-serif; background: #222; color: white; overflow: hidden; }
         #canvas-3d { flex: 1; background: #fff; }
-        #menu { width: 340px; background: #fff; border-left: 2px solid #3376e3; padding: 20px; box-shadow: -2px 0 10px rgba(0,0,0,0.1); }
-        .editor-2d { border: 2px solid #3376e3; margin: 15px 0; background: #fff; }
-        .btn { background: #3376e3; color: white; border: none; padding: 15px; width: 100%; font-weight: bold; cursor: pointer; border-radius: 4px; }
-        .btn-limpar { background: #666; margin-top: 10px; padding: 10px; }
+        #sidebar { width: 350px; background: #fff; border-left: 2px solid #3376e3; padding: 20px; color: #333; display: flex; flex-direction: column; }
+        .editor-2d { border: 2px solid #3376e3; background: #eee; margin: 15px 0; }
+        .btn { background: #3376e3; color: white; border: none; padding: 15px; width: 100%; cursor: pointer; font-weight: bold; border-radius: 4px; }
+        .btn-view { background: #444; margin-top: 10px; }
     </style>
 </head>
 <body>
 
 <div id="canvas-3d"></div>
 
-<aside id="menu">
-    <h3 style="margin:0">Layout Simples</h3>
+<aside id="sidebar">
+    <h2 style="margin:0">Editor Nostálgicas</h2>
+    <p style="font-size:12px">1. Carregue a imagem abaixo:</p>
     
-    <input type="file" id="arquivo" style="display:none" accept="image/*">
-    <button class="btn" onclick="document.getElementById('arquivo').click()">1. SUBIR IMAGEM</button>
+    <input type="file" id="img-input" style="display:none" accept="image/*">
+    <button class="btn" onclick="document.getElementById('img-input').click()">ESCOLHER ARQUIVO</button>
 
     <div class="editor-2d">
-        <canvas id="c2d" width="300" height="130"></canvas>
+        <canvas id="f-canvas" width="310" height="135"></canvas>
     </div>
 
-    <button class="btn btn-limpar" onclick="finalizar()">2. FINALIZAR (Sumiu Pontos)</button>
+    <button class="btn btn-view" onclick="concluir()">CONCLUIR (Limpar Ajustes)</button>
+    <p style="font-size:10px; color:#666; margin-top:10px">Ajuste a largura puxando as laterais azuis. A alça não será pintada.</p>
 </aside>
 
 <script type="module">
@@ -41,15 +43,15 @@
     let scene, camera, renderer, controls, decal, fCanvas;
 
     // --- EDITOR 2D ---
-    fCanvas = new fabric.Canvas('c2d', { backgroundColor: '#ffffff' });
+    fCanvas = new fabric.Canvas('f-canvas', { backgroundColor: '#ffffff' });
     fabric.Object.prototype.set({
         transparentCorners: false,
         cornerColor: '#3376e3',
-        cornerSize: 8,
+        cornerSize: 10,
         lockUniScaling: false
     });
 
-    window.finalizar = () => {
+    window.concluir = () => {
         fCanvas.discardActiveObject();
         fCanvas.requestRenderAll();
     };
@@ -66,41 +68,48 @@
     scene = new THREE.Scene();
     scene.background = new THREE.Color(0xffffff);
 
-    camera = new THREE.PerspectiveCamera(45, (window.innerWidth - 340) / window.innerHeight, 0.01, 100);
-    camera.position.set(0, 0, 0.5); // Posição fixa de segurança
+    camera = new THREE.PerspectiveCamera(45, (window.innerWidth - 350) / window.innerHeight, 0.01, 1000);
+    camera.position.set(0, 0, 1); 
 
     renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(window.innerWidth - 340, window.innerHeight);
+    renderer.setSize(window.innerWidth - 350, window.innerHeight);
     document.getElementById('canvas-3d').appendChild(renderer.domElement);
 
     controls = new OrbitControls(camera, renderer.domElement);
     scene.add(new THREE.AmbientLight(0xffffff, 2));
 
-    // --- CARREGAR OBJ ---
+    // --- CARREGAR OBJ COM FILTRO DE SEGURANÇA ---
     new OBJLoader().load('mug.obj', (obj) => {
-        // Centralização forçada
         const box = new THREE.Box3().setFromObject(obj);
         const center = box.getCenter(new THREE.Vector3());
         const size = box.getSize(new THREE.Vector3());
-        obj.position.sub(center);
-
+        
+        obj.position.sub(center); // Centraliza
         obj.traverse(c => {
             if (c.isMesh) c.material = new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: 0.1 });
         });
         scene.add(obj);
 
-        // Criar Estampa (Corte na alça fixo em 4.5 radianos)
-        const geo = new THREE.CylinderGeometry(size.x/2 * 1.01, size.x/2 * 1.01, size.y * 0.85, 64, 1, true, -2.25, 4.5);
-        decal = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ transparent: true, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -1 }));
+        // Cilindro da Estampa (Ajustado para não tocar na alça)
+        const geo = new THREE.CylinderGeometry(size.x/2 * 1.015, size.x/2 * 1.015, size.y * 0.85, 64, 1, true, -2.1, 4.2);
+        decal = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ 
+            transparent: true, 
+            side: THREE.DoubleSide,
+            polygonOffset: true,
+            polygonOffsetFactor: -1 
+        }));
         decal.rotation.y = Math.PI;
         scene.add(decal);
-        
-        // Ajusta zoom
-        camera.position.z = size.z * 3;
+
+        // Posiciona a câmara dinamicamente para o objeto aparecer
+        camera.position.z = size.z * 3.5;
+        controls.update();
     });
 
-    // --- LOGICA DE IMAGEM ---
-    document.getElementById('arquivo').onchange = (e) => {
+    // --- CARREGAMENTO DE IMAGEM ---
+    document.getElementById('img-input').onchange = (e) => {
+        const file = e.target.files[0];
+        if(!file) return;
         const reader = new FileReader();
         reader.onload = (f) => {
             fabric.Image.fromURL(f.target.result, (img) => {
@@ -110,7 +119,7 @@
                 fCanvas.centerObject(img);
             });
         };
-        reader.readAsDataURL(e.target.files[0]);
+        reader.readAsDataURL(file);
     };
 
     function animate() {
