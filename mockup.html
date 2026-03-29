@@ -197,4 +197,53 @@
 
             // Aplica a textura no material da caneca
             mug.traverse((child) => {
-                if (child.isMesh
+                if (child.isMesh) {
+                    child.material.map = texture;
+                    child.material.needsUpdate = true;
+                }
+            });
+            
+            // Mostra a imagem no editor guia
+            imgPersonalizada.src = source;
+            imgPersonalizada.style.display = 'block';
+            helpText.style.display = 'none';
+            
+            // Reseta posição e escala inicial
+            imgState = { x: 0, y: 0, scale: 0.5 }; // Começa pequena para ser mais fácil enquadrar
+            
+            updateVisuals();
+        });
+    }
+
+    // Listeners
+    document.getElementById('upload').addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (event) => applyTexture(event.target.result);
+            reader.readAsDataURL(file);
+        }
+    });
+
+    function checkUrl() {
+        const p = new URLSearchParams(window.location.search);
+        if(p.get('foto')) {
+            applyTexture(p.get('foto'));
+            document.getElementById('admin-panel').style.display = 'none'; // Esconde o editor para o cliente
+        }
+    }
+
+    function onWindowResize() {
+        camera.aspect = (window.innerWidth - 320) / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth - 320, window.innerHeight);
+    }
+
+    function animate() {
+        requestAnimationFrame(animate);
+        controls.update();
+        renderer.render(scene, camera);
+    }
+</script>
+</body>
+</html>
