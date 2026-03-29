@@ -3,65 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nostálgicas Studio - Editor Pro</title>
+    <title>Nostálgicas Studio - Área de Impressão Real</title>
     <script type="importmap">
       { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js", "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/" } }
     </script>
     <script src="https://unpkg.com/fabric@5.3.0/dist/fabric.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --primary: #333; --bg: #222; --text: #ffffff; --panel: #333333; --border: #555; }
+        :root { --primary: #333; --bg: #1a1a1a; --text: #ffffff; --panel: #2d2d2d; --accent: #4a90e2; }
         body { margin: 0; display: flex; height: 100vh; font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); overflow: hidden; }
         
-        #render-3d { flex: 1; background: #fff; }
+        #render-3d { flex: 1; background: #f0f0f0; }
 
-        #sidebar { width: 400px; background: var(--panel); border-left: 1px solid var(--border); padding: 15px; display: flex; flex-direction: column; overflow-y: auto; }
+        #sidebar { width: 420px; background: var(--panel); border-left: 1px solid #444; padding: 20px; display: flex; flex-direction: column; overflow-y: auto; box-shadow: -10px 0 20px rgba(0,0,0,0.3); }
         
-        /* Cabeçalho de Dimensões */
-        .dimensões { font-size: 14px; margin-bottom: 10px; font-weight: 500; }
+        .header-info { margin-bottom: 15px; }
+        .header-info h3 { margin: 0; font-size: 16px; color: var(--accent); }
+        .header-info p { margin: 5px 0; font-size: 12px; color: #bbb; }
 
-        /* Área do Canvas (Layout) */
-        .canvas-container { 
+        /* Área do Canvas com borda de segurança */
+        .canvas-container-box { 
             width: 100%; 
-            background-image: conic-gradient(#eee 25%, #fff 0 50%, #eee 0 75%, #fff 0);
-            background-size: 20px 20px;
-            border: 1px solid var(--border);
+            background: #3d3d3d;
+            border: 2px solid #555;
             margin-bottom: 20px;
+            padding: 10px;
             display: flex;
-            justify-content: center;
+            flex-direction: column;
+            align-items: center;
         }
 
-        /* Grade de Botões igual à imagem */
-        .button-grid { 
-            display: grid; 
-            grid-template-columns: 1fr 1fr; 
-            gap: 10px; 
-            margin-bottom: 10px;
-        }
-
+        /* Grade de Botões Profissional */
+        .button-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
         .btn { 
-            background: transparent; 
-            color: white; 
-            border: 2px solid white; 
-            padding: 12px 8px; 
-            font-size: 13px; 
-            font-weight: 500; 
-            cursor: pointer; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center;
-            gap: 8px;
-            transition: 0.2s;
+            background: transparent; color: white; border: 1.5px solid #888; padding: 12px 5px; 
+            font-size: 12px; font-weight: 600; cursor: pointer; display: flex; 
+            align-items: center; justify-content: center; gap: 8px; transition: 0.3s;
         }
-        .btn:hover { background: rgba(255,255,255,0.1); }
-        
-        /* Botão largo (Vídeo) */
-        .btn-full { grid-column: span 2; }
+        .btn:hover { border-color: white; background: rgba(255,255,255,0.05); }
+        .btn-full { grid-column: span 2; background: var(--accent); border: none; }
+        .btn-full:hover { background: #357abd; }
 
-        /* Sliders de ajuste (mais discretos) */
-        .control-section { margin-top: 15px; border-top: 1px solid var(--border); padding-top: 15px; }
-        label { font-size: 11px; text-transform: uppercase; color: #aaa; display: block; margin-bottom: 5px; }
-        input[type="range"] { width: 100%; margin-bottom: 15px; accent-color: #fff; }
+        .control-section { margin-top: 10px; padding-top: 15px; border-top: 1px solid #444; }
+        label { font-size: 11px; color: #999; text-transform: uppercase; margin-bottom: 8px; display: block; }
+        input[type="range"] { width: 100%; accent-color: var(--accent); margin-bottom: 15px; }
     </style>
 </head>
 <body>
@@ -69,41 +54,40 @@
 <div id="render-3d"></div>
 
 <aside id="sidebar">
-    <div class="dimensões">Dimensões do layout (mm): 210 x 95</div>
+    <div class="header-info">
+        <h3>Nostálgicas Studio - Pro</h3>
+        <p><i class="fa-solid fa-ruler-combined"></i> Área Máxima: 210mm x 95mm</p>
+    </div>
     
-    <div class="canvas-container">
-        <canvas id="canvas2d" width="370" height="180"></canvas>
+    <div class="canvas-container-box">
+        <canvas id="canvas2d" width="380" height="170"></canvas>
     </div>
 
     <div class="button-grid">
         <input type="file" id="upload-img" style="display:none" accept="image/*">
         <button class="btn" onclick="document.getElementById('upload-img').click()">
-            <i class="fa-regular fa-image"></i> Adicionar imagem
+            <i class="fa-regular fa-image"></i> IMAGEM
         </button>
-        
         <button class="btn" onclick="addTexto()">
-            <i class="fa-solid fa-font"></i> Adicionar texto
+            <i class="fa-solid fa-font"></i> TEXTO
         </button>
-        
         <button class="btn" onclick="salvarCena()">
-            <i class="fa-solid fa-camera"></i> Instantâneo da cena 3D
+            <i class="fa-solid fa-camera"></i> FOTO 3D
         </button>
-        
         <button class="btn" onclick="baixarLayout()">
-            <i class="fa-solid fa-download"></i> Baixar layout
+            <i class="fa-solid fa-print"></i> IMPRIMIR
         </button>
-        
         <button class="btn btn-full">
-            <i class="fa-solid fa-video"></i> Renderização de vídeo
+            <i class="fa-solid fa-play"></i> RENDERIZAR VÍDEO AR
         </button>
     </div>
 
     <div class="control-section">
-        <label>Girar Arte (360°)</label>
-        <input type="range" id="rotacao" min="-1" max="1" step="0.001" value="0">
+        <label>Girar Arte (Centralizar)</label>
+        <input type="range" id="rotacao" min="-0.5" max="0.5" step="0.001" value="0">
         
-        <label>Zoom do Envelopamento</label>
-        <input type="range" id="zoom-arte" min="0.5" max="2" step="0.01" value="1">
+        <label>Escala da Caneca</label>
+        <input type="range" id="zoom-cam" min="3" max="10" step="0.1" value="6">
     </div>
 </aside>
 
@@ -112,37 +96,49 @@
     import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
     import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
-    // Variáveis Globais
     let scene, camera, renderer, controls, canecaMesh, texture3d, fCanvas;
 
-    // 1. Iniciar Fabric.js (Canvas 2D)
-    fCanvas = new fabric.Canvas('canvas2d');
+    // --- 1. CONFIGURAÇÃO DO LIMITE DE ÁREA (FABRIC.JS) ---
+    fCanvas = new fabric.Canvas('canvas2d', {
+        backgroundColor: '#ffffff',
+        preserveObjectStacking: true
+    });
+
+    // Criar a Máscara (ClipPath) de 210x95 (proporcional ao canvas)
+    const clipRect = new fabric.Rect({
+        left: 0, top: 0,
+        width: 380, height: 170,
+        absolutePositioned: true
+    });
+    fCanvas.clipPath = clipRect;
+
     fCanvas.on('after:render', () => { if(texture3d) texture3d.needsUpdate = true; });
 
-    function addTexto() {
-        const t = new fabric.IText('Nostálgicas', { left: 100, top: 50, fill: '#000', fontSize: 25 });
-        fCanvas.add(t);
-        fCanvas.setActiveObject(t);
-    }
-    window.addTexto = addTexto;
+    window.addTexto = () => {
+        const text = new fabric.IText('Sua Arte Aqui', { 
+            left: 100, top: 70, fontSize: 30, fontFamily: 'Arial', fill: '#333' 
+        });
+        fCanvas.add(text);
+        fCanvas.setActiveObject(text);
+    };
 
-    // 2. Iniciar Three.js
+    // --- 2. CONFIGURAÇÃO 3D (THREE.JS) ---
     scene = new THREE.Scene();
     scene.background = new THREE.Color(0xffffff);
-    camera = new THREE.PerspectiveCamera(40, (window.innerWidth - 400) / window.innerHeight, 0.1, 1000);
+    camera = new THREE.PerspectiveCamera(40, (window.innerWidth - 420) / window.innerHeight, 0.1, 1000);
     camera.position.set(0, 0, 6);
 
     renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
-    renderer.setSize(window.innerWidth - 400, window.innerHeight);
-    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setSize(window.innerWidth - 420, window.innerHeight);
     document.getElementById('render-3d').appendChild(renderer.domElement);
 
     controls = new OrbitControls(camera, renderer.domElement);
-    scene.add(new THREE.AmbientLight(0xffffff, 2.0));
+    scene.add(new THREE.AmbientLight(0xffffff, 2.5));
 
-    // 3. Textura e Material (Blindado para exterior)
     texture3d = new THREE.CanvasTexture(fCanvas.getElement());
     texture3d.colorSpace = THREE.SRGBColorSpace;
+    // Importante: ClampToEdge impede que a arte "vaze" para o outro lado da alça
+    texture3d.wrapS = texture3d.wrapT = THREE.ClampToEdgeWrapping; 
 
     const materialPro = new THREE.ShaderMaterial({
         uniforms: { map: { value: texture3d }, color: { value: new THREE.Color(0xffffff) } },
@@ -151,66 +147,22 @@
             uniform sampler2D map; uniform vec3 color; varying vec2 vUv;
             void main() {
                 vec4 tex = texture2D(map, vUv);
-                if (gl_FrontFacing) { gl_FragColor = mix(vec4(color,1.0), tex, tex.a); }
-                else { gl_FragColor = vec4(color, 1.0); }
+                if (gl_FrontFacing) { 
+                    gl_FragColor = mix(vec4(color,1.0), tex, tex.a); 
+                } else { 
+                    gl_FragColor = vec4(color, 1.0); 
+                }
             }
         `,
         side: THREE.DoubleSide
     });
 
-    // 4. Carregar Modelo
     new OBJLoader().load('mug.obj', (obj) => {
         canecaMesh = obj.children[0];
         obj.scale.set(50, 50, 50);
         
-        // Mapeamento UV Cilíndrico
+        // Mapeamento UV Cilíndrico focado na frente
         const geo = canecaMesh.geometry;
         geo.computeBoundingBox();
         const uv = geo.attributes.uv;
-        const pos = geo.attributes.position;
-        for (let i = 0; i < pos.count; i++) {
-            let u = Math.atan2(pos.getX(i), pos.getZ(i)) / (Math.PI * 2) + 0.5;
-            let v = (pos.getY(i) - geo.boundingBox.min.y) / (geo.boundingBox.max.y - geo.boundingBox.min.y);
-            uv.setXY(i, (u + 0.5) % 1.0, v);
-        }
-        
-        canecaMesh.material = materialPro;
-        scene.add(obj);
-    });
-
-    // Controles
-    document.getElementById('rotacao').oninput = (e) => texture3d.offset.x = parseFloat(e.target.value);
-    document.getElementById('zoom-arte').oninput = (e) => {
-        const s = 1 / e.target.value;
-        texture3d.repeat.set(s, s);
-        texture3d.offset.y = (1 - s) / 2;
-    };
-
-    // Funções de Botão
-    document.getElementById('upload-img').onchange = (e) => {
-        const reader = new FileReader();
-        reader.onload = (f) => fabric.Image.fromURL(f.target.result, (img) => {
-            img.scaleToWidth(150); fCanvas.add(img).centerObject(img).setActiveObject(img);
-        });
-        reader.readAsDataURL(e.target.files[0]);
-    };
-
-    window.salvarCena = () => {
-        const link = document.createElement('a');
-        link.download = 'Cena_3D.png';
-        link.href = renderer.domElement.toDataURL();
-        link.click();
-    };
-
-    window.baixarLayout = () => {
-        const link = document.createElement('a');
-        link.download = 'Layout_Impressao.png';
-        link.href = fCanvas.toDataURL();
-        link.click();
-    };
-
-    function animate() { requestAnimationFrame(animate); controls.update(); renderer.render(scene, camera); }
-    animate();
-</script>
-</body>
-</html>
+        const
