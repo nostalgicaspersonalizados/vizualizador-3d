@@ -134,11 +134,7 @@
                 fCanvas.add(img);
                 fCanvas.centerObject(img);
                 fCanvas.setActiveObject(img);
-            });
-        };
         reader.readAsDataURL(e.target.files[0]);
-    };
-
     function animate() { requestAnimationFrame(animate); controls.update(); renderer.render(scene, camera); }
     animate();
 </script>
