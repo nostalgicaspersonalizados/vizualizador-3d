@@ -2,40 +2,35 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Nostálgicas Studio - Sistema Corrigido</title>
+    <title>Nostálgicas - Simples e Funcional</title>
     <script type="importmap">
       { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js", "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/" } }
     </script>
     <script src="https://unpkg.com/fabric@5.3.0/dist/fabric.min.js"></script>
     <style>
-        body { margin: 0; display: flex; height: 100vh; font-family: sans-serif; background: #f0f0f0; overflow: hidden; }
-        #canvas-3d { flex: 1; background: radial-gradient(circle, #ffffff 0%, #dcdcdc 100%); position: relative; }
-        #painel { width: 360px; background: #fff; border-left: 2px solid #3376e3; padding: 20px; box-shadow: -5px 0 15px rgba(0,0,0,0.1); z-index: 10; }
-        .editor-2d { border: 2px solid #3376e3; border-radius: 4px; background: #fff; margin: 15px 0; }
-        .btn-principal { background: #3376e3; color: white; border: none; padding: 15px; width: 100%; font-weight: bold; cursor: pointer; border-radius: 5px; text-transform: uppercase; }
-        .btn-limpar { background: #f8f9fa; color: #333; border: 1px solid #ccc; margin-top: 10px; padding: 10px; width: 100%; cursor: pointer; border-radius: 5px; }
+        body { margin: 0; display: flex; height: 100vh; font-family: sans-serif; background: #f0f0f0; }
+        #canvas-3d { flex: 1; background: #fff; }
+        #menu { width: 340px; background: #fff; border-left: 2px solid #3376e3; padding: 20px; box-shadow: -2px 0 10px rgba(0,0,0,0.1); }
+        .editor-2d { border: 2px solid #3376e3; margin: 15px 0; background: #fff; }
+        .btn { background: #3376e3; color: white; border: none; padding: 15px; width: 100%; font-weight: bold; cursor: pointer; border-radius: 4px; }
+        .btn-limpar { background: #666; margin-top: 10px; padding: 10px; }
     </style>
 </head>
 <body>
 
 <div id="canvas-3d"></div>
 
-<aside id="painel">
-    <h2 style="margin-top:0; color:#333">Personalização</h2>
+<aside id="menu">
+    <h3 style="margin:0">Layout Simples</h3>
     
-    <input type="file" id="upload-foto" style="display:none" accept="image/*">
-    <button class="btn-principal" onclick="document.getElementById('upload-foto').click()">Selecionar Foto</button>
+    <input type="file" id="arquivo" style="display:none" accept="image/*">
+    <button class="btn" onclick="document.getElementById('arquivo').click()">1. SUBIR IMAGEM</button>
 
     <div class="editor-2d">
-        <canvas id="f-canvas" width="320" height="135"></canvas>
+        <canvas id="c2d" width="300" height="130"></canvas>
     </div>
 
-    <button class="btn-limpar" onclick="limparAjustes()">CONCLUIR (Limpar Ajustes)</button>
-    
-    <p style="font-size: 11px; color: #666; line-height: 1.5; margin-top: 15px;">
-        • Arraste e estique a imagem pelas laterais.<br>
-        • A arte não aparecerá na alça.
-    </p>
+    <button class="btn btn-limpar" onclick="finalizar()">2. FINALIZAR (Sumiu Pontos)</button>
 </aside>
 
 <script type="module">
@@ -43,101 +38,73 @@
     import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
     import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
-    let scene, camera, renderer, controls, mug, decalque, fCanvas;
+    let scene, camera, renderer, controls, decal, fCanvas;
 
-    // --- 1. CONFIGURAÇÃO DO EDITOR 2D ---
-    fCanvas = new fabric.Canvas('f-canvas', { backgroundColor: '#ffffff' });
+    // --- EDITOR 2D ---
+    fCanvas = new fabric.Canvas('c2d', { backgroundColor: '#ffffff' });
     fabric.Object.prototype.set({
         transparentCorners: false,
         cornerColor: '#3376e3',
         cornerSize: 8,
-        lockUniScaling: false // Permite esticar só a largura
+        lockUniScaling: false
     });
 
-    window.limparAjustes = () => {
+    window.finalizar = () => {
         fCanvas.discardActiveObject();
         fCanvas.requestRenderAll();
     };
 
     fCanvas.on('after:render', () => {
-        if (!decalque) return;
+        if (!decal) return;
         const texture = new THREE.CanvasTexture(fCanvas.getElement());
         texture.colorSpace = THREE.SRGBColorSpace;
-        decalque.material.map = texture;
-        decalque.material.needsUpdate = true;
+        decal.material.map = texture;
+        decal.material.needsUpdate = true;
     });
 
-    // --- 2. CONFIGURAÇÃO DO AMBIENTE 3D ---
+    // --- MUNDO 3D ---
     scene = new THREE.Scene();
     scene.background = new THREE.Color(0xffffff);
 
-    camera = new THREE.PerspectiveCamera(45, (window.innerWidth - 360) / window.innerHeight, 0.01, 1000);
-    camera.position.set(0, 0, 5); // Posição inicial segura
+    camera = new THREE.PerspectiveCamera(45, (window.innerWidth - 340) / window.innerHeight, 0.01, 100);
+    camera.position.set(0, 0, 0.5); // Posição fixa de segurança
 
     renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(window.innerWidth - 360, window.innerHeight);
-    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setSize(window.innerWidth - 340, window.innerHeight);
     document.getElementById('canvas-3d').appendChild(renderer.domElement);
 
     controls = new OrbitControls(camera, renderer.domElement);
-    scene.add(new THREE.AmbientLight(0xffffff, 1.8));
-    
-    const luzFoco = new THREE.DirectionalLight(0xffffff, 1);
-    luzFoco.position.set(5, 5, 5);
-    scene.add(luzFoco);
+    scene.add(new THREE.AmbientLight(0xffffff, 2));
 
-    // --- 3. CARREGAR O ARQUIVO MUG.OBJ ---
-    const loader = new OBJLoader();
-    loader.load('mug.obj', (objeto) => {
-        mug = objeto;
-
-        // Centralizar e medir a caneca para ela NUNCA sumir
-        const box = new THREE.Box3().setFromObject(mug);
+    // --- CARREGAR OBJ ---
+    new OBJLoader().load('mug.obj', (obj) => {
+        // Centralização forçada
+        const box = new THREE.Box3().setFromObject(obj);
         const center = box.getCenter(new THREE.Vector3());
         const size = box.getSize(new THREE.Vector3());
-        
-        mug.position.sub(center); // Move o centro da caneca para o ponto (0,0,0)
+        obj.position.sub(center);
 
-        mug.traverse(child => {
-            if (child.isMesh) {
-                child.material = new THREE.MeshPhysicalMaterial({ 
-                    color: 0xffffff, roughness: 0.1, clearcoat: 1 
-                });
-            }
+        obj.traverse(c => {
+            if (c.isMesh) c.material = new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: 0.1 });
         });
-        scene.add(mug);
+        scene.add(obj);
 
-        // Criar a área da estampa (Cilindro que ignora a alça)
-        const raio = (size.x / 2) * 1.015;
-        const altura = size.y * 0.86;
-        // O gap de 1.8 radianos protege a alça
-        const geo = new THREE.CylinderGeometry(raio, raio, altura, 64, 1, true, -2.2, 4.4);
+        // Criar Estampa (Corte na alça fixo em 4.5 radianos)
+        const geo = new THREE.CylinderGeometry(size.x/2 * 1.01, size.x/2 * 1.01, size.y * 0.85, 64, 1, true, -2.25, 4.5);
+        decal = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ transparent: true, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -1 }));
+        decal.rotation.y = Math.PI;
+        scene.add(decal);
         
-        decalque = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ 
-            transparent: true, 
-            side: THREE.DoubleSide,
-            polygonOffset: true,
-            polygonOffsetFactor: -1
-        }));
-        
-        decalque.rotation.y = Math.PI;
-        scene.add(decalque);
-
-        // Ajuste automático de zoom baseado no tamanho da caneca
-        const maxDim = Math.max(size.x, size.y, size.z);
-        camera.position.z = maxDim * 2.5;
-        controls.update();
-    }, undefined, (erro) => {
-        console.error("Erro ao carregar o arquivo:", erro);
-        alert("Erro ao carregar o arquivo mug.obj. Verifique se o nome está correto.");
+        // Ajusta zoom
+        camera.position.z = size.z * 3;
     });
 
-    // --- 4. CARREGAMENTO DE IMAGEM ---
-    document.getElementById('upload-foto').onchange = (e) => {
+    // --- LOGICA DE IMAGEM ---
+    document.getElementById('arquivo').onchange = (e) => {
         const reader = new FileReader();
         reader.onload = (f) => {
             fabric.Image.fromURL(f.target.result, (img) => {
-                img.scaleToHeight(125);
+                img.scaleToHeight(120);
                 fCanvas.add(img);
                 fCanvas.setActiveObject(img);
                 fCanvas.centerObject(img);
@@ -152,12 +119,6 @@
         renderer.render(scene, camera);
     }
     animate();
-
-    window.onresize = () => {
-        camera.aspect = (window.innerWidth - 360) / window.innerHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(window.innerWidth - 360, window.innerHeight);
-    };
 </script>
 </body>
 </html>
