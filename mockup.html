@@ -3,50 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nostálgicas Studio - Área de Impressão Real</title>
+    <title>Nostálgicas Studio - Restaurado</title>
     <script type="importmap">
       { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js", "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/" } }
     </script>
     <script src="https://unpkg.com/fabric@5.3.0/dist/fabric.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --primary: #333; --bg: #1a1a1a; --text: #ffffff; --panel: #2d2d2d; --accent: #4a90e2; }
-        body { margin: 0; display: flex; height: 100vh; font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); overflow: hidden; }
-        
-        #render-3d { flex: 1; background: #f0f0f0; }
-
-        #sidebar { width: 420px; background: var(--panel); border-left: 1px solid #444; padding: 20px; display: flex; flex-direction: column; overflow-y: auto; box-shadow: -10px 0 20px rgba(0,0,0,0.3); }
-        
-        .header-info { margin-bottom: 15px; }
-        .header-info h3 { margin: 0; font-size: 16px; color: var(--accent); }
-        .header-info p { margin: 5px 0; font-size: 12px; color: #bbb; }
-
-        /* Área do Canvas com borda de segurança */
-        .canvas-container-box { 
-            width: 100%; 
-            background: #3d3d3d;
-            border: 2px solid #555;
-            margin-bottom: 20px;
-            padding: 10px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        /* Grade de Botões Profissional */
-        .button-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
-        .btn { 
-            background: transparent; color: white; border: 1.5px solid #888; padding: 12px 5px; 
-            font-size: 12px; font-weight: 600; cursor: pointer; display: flex; 
-            align-items: center; justify-content: center; gap: 8px; transition: 0.3s;
-        }
-        .btn:hover { border-color: white; background: rgba(255,255,255,0.05); }
-        .btn-full { grid-column: span 2; background: var(--accent); border: none; }
-        .btn-full:hover { background: #357abd; }
-
-        .control-section { margin-top: 10px; padding-top: 15px; border-top: 1px solid #444; }
-        label { font-size: 11px; color: #999; text-transform: uppercase; margin-bottom: 8px; display: block; }
-        input[type="range"] { width: 100%; accent-color: var(--accent); margin-bottom: 15px; }
+        :root { --primary: #222; --accent: #ffffff; --panel: #333; }
+        body { margin: 0; display: flex; height: 100vh; font-family: 'Segoe UI', sans-serif; background: #1a1a1a; color: white; overflow: hidden; }
+        #render-3d { flex: 1; background: #ffffff; }
+        #sidebar { width: 380px; background: var(--panel); padding: 20px; border-left: 1px solid #444; display: flex; flex-direction: column; }
+        .dim-text { font-size: 13px; margin-bottom: 10px; color: #ccc; }
+        .canvas-area { background: #444; padding: 5px; border: 1px solid #555; margin-bottom: 20px; }
+        .button-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .btn { background: transparent; color: white; border: 2px solid white; padding: 12px; cursor: pointer; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 12px; }
+        .btn:hover { background: rgba(255,255,255,0.1); }
+        .btn-full { grid-column: span 2; }
+        .controls { margin-top: 20px; border-top: 1px solid #555; padding-top: 20px; }
+        label { font-size: 11px; text-transform: uppercase; color: #888; display: block; margin-bottom: 5px; }
+        input[type="range"] { width: 100%; margin-bottom: 15px; accent-color: white; }
     </style>
 </head>
 <body>
@@ -54,40 +30,25 @@
 <div id="render-3d"></div>
 
 <aside id="sidebar">
-    <div class="header-info">
-        <h3>Nostálgicas Studio - Pro</h3>
-        <p><i class="fa-solid fa-ruler-combined"></i> Área Máxima: 210mm x 95mm</p>
-    </div>
-    
-    <div class="canvas-container-box">
-        <canvas id="canvas2d" width="380" height="170"></canvas>
+    <div class="dim-text">Dimensões do layout (mm): 210 x 95</div>
+    <div class="canvas-area">
+        <canvas id="canvas2d" width="340" height="155"></canvas>
     </div>
 
     <div class="button-grid">
-        <input type="file" id="upload-img" style="display:none" accept="image/*">
-        <button class="btn" onclick="document.getElementById('upload-img').click()">
-            <i class="fa-regular fa-image"></i> IMAGEM
-        </button>
-        <button class="btn" onclick="addTexto()">
-            <i class="fa-solid fa-font"></i> TEXTO
-        </button>
-        <button class="btn" onclick="salvarCena()">
-            <i class="fa-solid fa-camera"></i> FOTO 3D
-        </button>
-        <button class="btn" onclick="baixarLayout()">
-            <i class="fa-solid fa-print"></i> IMPRIMIR
-        </button>
-        <button class="btn btn-full">
-            <i class="fa-solid fa-play"></i> RENDERIZAR VÍDEO AR
-        </button>
+        <input type="file" id="up-img" style="display:none" accept="image/*">
+        <button class="btn" onclick="document.getElementById('up-img').click()"><i class="fa-regular fa-image"></i> Imagem</button>
+        <button class="btn" onclick="addText()"><i class="fa-solid fa-font"></i> Texto</button>
+        <button class="btn" onclick="takePhoto()"><i class="fa-solid fa-camera"></i> Foto 3D</button>
+        <button class="btn" onclick="downloadLayout()"><i class="fa-solid fa-download"></i> Layout</button>
+        <button class="btn btn-full"><i class="fa-solid fa-video"></i> Renderização de Vídeo</button>
     </div>
 
-    <div class="control-section">
-        <label>Girar Arte (Centralizar)</label>
-        <input type="range" id="rotacao" min="-0.5" max="0.5" step="0.001" value="0">
-        
-        <label>Escala da Caneca</label>
-        <input type="range" id="zoom-cam" min="3" max="10" step="0.1" value="6">
+    <div class="controls">
+        <label>Girar Arte na Frente</label>
+        <input type="range" id="rot" min="-0.5" max="0.5" step="0.001" value="0">
+        <label>Zoom da Caneca</label>
+        <input type="range" id="cam-z" min="3" max="10" step="0.1" value="6">
     </div>
 </aside>
 
@@ -96,73 +57,90 @@
     import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
     import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
-    let scene, camera, renderer, controls, canecaMesh, texture3d, fCanvas;
-
-    // --- 1. CONFIGURAÇÃO DO LIMITE DE ÁREA (FABRIC.JS) ---
-    fCanvas = new fabric.Canvas('canvas2d', {
-        backgroundColor: '#ffffff',
-        preserveObjectStacking: true
-    });
-
-    // Criar a Máscara (ClipPath) de 210x95 (proporcional ao canvas)
-    const clipRect = new fabric.Rect({
-        left: 0, top: 0,
-        width: 380, height: 170,
-        absolutePositioned: true
-    });
-    fCanvas.clipPath = clipRect;
-
+    // 1. Setup Canvas 2D (Fabric)
+    const fCanvas = new fabric.Canvas('canvas2d', { backgroundColor: '#fff' });
     fCanvas.on('after:render', () => { if(texture3d) texture3d.needsUpdate = true; });
 
-    window.addTexto = () => {
-        const text = new fabric.IText('Sua Arte Aqui', { 
-            left: 100, top: 70, fontSize: 30, fontFamily: 'Arial', fill: '#333' 
-        });
-        fCanvas.add(text);
-        fCanvas.setActiveObject(text);
-    };
-
-    // --- 2. CONFIGURAÇÃO 3D (THREE.JS) ---
-    scene = new THREE.Scene();
+    // 2. Setup Three.js
+    const scene = new THREE.Scene();
     scene.background = new THREE.Color(0xffffff);
-    camera = new THREE.PerspectiveCamera(40, (window.innerWidth - 420) / window.innerHeight, 0.1, 1000);
+    const camera = new THREE.PerspectiveCamera(45, (window.innerWidth - 380) / window.innerHeight, 0.1, 1000);
     camera.position.set(0, 0, 6);
 
-    renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
-    renderer.setSize(window.innerWidth - 420, window.innerHeight);
+    const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+    renderer.setSize(window.innerWidth - 380, window.innerHeight);
     document.getElementById('render-3d').appendChild(renderer.domElement);
 
-    controls = new OrbitControls(camera, renderer.domElement);
-    scene.add(new THREE.AmbientLight(0xffffff, 2.5));
+    const controls = new OrbitControls(camera, renderer.domElement);
+    scene.add(new THREE.AmbientLight(0xffffff, 2.0));
+    const light = new THREE.DirectionalLight(0xffffff, 1);
+    light.position.set(5,5,5);
+    scene.add(light);
 
-    texture3d = new THREE.CanvasTexture(fCanvas.getElement());
+    // 3. Textura e Shader (Correção de visibilidade)
+    const texture3d = new THREE.CanvasTexture(fCanvas.getElement());
     texture3d.colorSpace = THREE.SRGBColorSpace;
-    // Importante: ClampToEdge impede que a arte "vaze" para o outro lado da alça
-    texture3d.wrapS = texture3d.wrapT = THREE.ClampToEdgeWrapping; 
 
-    const materialPro = new THREE.ShaderMaterial({
+    const mat = new THREE.ShaderMaterial({
         uniforms: { map: { value: texture3d }, color: { value: new THREE.Color(0xffffff) } },
         vertexShader: `varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }`,
         fragmentShader: `
             uniform sampler2D map; uniform vec3 color; varying vec2 vUv;
             void main() {
                 vec4 tex = texture2D(map, vUv);
-                if (gl_FrontFacing) { 
-                    gl_FragColor = mix(vec4(color,1.0), tex, tex.a); 
-                } else { 
-                    gl_FragColor = vec4(color, 1.0); 
-                }
+                if (gl_FrontFacing) { gl_FragColor = mix(vec4(color,1.0), tex, tex.a); }
+                else { gl_FragColor = vec4(color, 1.0); }
             }
         `,
         side: THREE.DoubleSide
     });
 
-    new OBJLoader().load('mug.obj', (obj) => {
-        canecaMesh = obj.children[0];
+    // 4. Carregar Caneca (Com verificação de erro)
+    const loader = new OBJLoader();
+    loader.load('mug.obj', (obj) => {
+        const mesh = obj.children[0];
         obj.scale.set(50, 50, 50);
         
-        // Mapeamento UV Cilíndrico focado na frente
-        const geo = canecaMesh.geometry;
+        // Centralizar
+        const box = new THREE.Box3().setFromObject(obj);
+        const center = box.getCenter(new THREE.Vector3());
+        obj.position.sub(center);
+
+        // Mapeamento UV Estável
+        const geo = mesh.geometry;
         geo.computeBoundingBox();
         const uv = geo.attributes.uv;
-        const
+        const pos = geo.attributes.position;
+        for (let i = 0; i < pos.count; i++) {
+            let u = Math.atan2(pos.getX(i), pos.getZ(i)) / (Math.PI * 2) + 0.5;
+            let v = (pos.getY(i) - geo.boundingBox.min.y) / (geo.boundingBox.max.y - geo.boundingBox.min.y);
+            uv.setXY(i, (u + 0.5) % 1.0, v);
+        }
+
+        mesh.material = mat;
+        scene.add(obj);
+        console.log("Caneca carregada com sucesso!");
+    }, 
+    (xhr) => console.log((xhr.loaded / xhr.total * 100) + '% carregado'),
+    (err) => alert("ERRO: O arquivo 'mug.obj' não foi encontrado na pasta!"));
+
+    // Funções de Interface
+    window.addText = () => { fCanvas.add(new fabric.IText('Texto', {left: 50, top: 50})); };
+    document.getElementById('up-img').onchange = (e) => {
+        const r = new FileReader();
+        r.onload = (f) => fabric.Image.fromURL(f.target.result, (img) => {
+            img.scaleToWidth(100); fCanvas.add(img).centerObject(img);
+        });
+        r.readAsDataURL(e.target.files[0]);
+    };
+    window.takePhoto = () => { const a = document.createElement('a'); a.download = 'foto.png'; a.href = renderer.domElement.toDataURL(); a.click(); };
+    window.downloadLayout = () => { const a = document.createElement('a'); a.download = 'layout.png'; a.href = fCanvas.toDataURL(); a.click(); };
+    
+    document.getElementById('rot').oninput = (e) => texture3d.offset.x = parseFloat(e.target.value);
+    document.getElementById('cam-z').oninput = (e) => camera.position.z = e.target.value;
+
+    function animate() { requestAnimationFrame(animate); controls.update(); renderer.render(scene, camera); }
+    animate();
+</script>
+</body>
+</html>
