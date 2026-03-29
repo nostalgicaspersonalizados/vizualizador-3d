@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nostálgicas Studio - Mockup 3D Profissional v6</title>
+    <title>Nostálgicas Studio - Mockup Realista 360°</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/controls/OrbitControls.js"></script>
@@ -11,30 +11,17 @@
     
     <style>
         :root { --accent: #2ecc71; --dark: #1a1a1a; --text: #eee; }
-        body { margin: 0; padding: 0; display: flex; height: 100vh; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #000; color: var(--text); overflow: hidden; }
+        body { margin: 0; padding: 0; display: flex; height: 100vh; font-family: 'Segoe UI', sans-serif; background: #000; color: var(--text); overflow: hidden; }
         
-        /* MENU LATERAL - ÁREA DE AJUSTE BLINDADA */
+        /* MENU LATERAL - ÁREA DE CONTROLES BLINDADA */
         #sidebar { 
-            width: 340px; 
-            min-width: 340px; /* Impede que o menu suma */
-            background: var(--dark); 
-            padding: 25px; 
-            border-right: 3px solid var(--accent); 
-            display: flex; 
-            flex-direction: column;
-            overflow-y: auto; /* Permite rolar se o menu for grande */
-            z-index: 100; 
-            box-shadow: 5px 0 15px rgba(0,0,0,0.5);
+            width: 350px; min-width: 350px; background: var(--dark); padding: 25px; 
+            border-right: 3px solid var(--accent); display: flex; flex-direction: column; 
+            overflow-y: auto; z-index: 100; box-shadow: 5px 0 15px rgba(0,0,0,0.5);
         }
 
-        /* ÁREA DO 3D - AMBIENTE DINÂMICO */
-        #render-3d { 
-            flex: 1; 
-            background: radial-gradient(circle, #ffffff 0%, #bbbbbb 100%); /* Fundo Padrão Cinza Claro */
-            cursor: move; 
-            position: relative; 
-            transition: background 0.5s ease;
-        }
+        /* ÁREA DO 3D - FUNDO EXTERIOR BRANCO SÓLIDO */
+        #render-3d { flex: 1; background: #ffffff; cursor: move; position: relative; }
 
         .logo-container { text-align: center; margin-bottom: 20px; border-bottom: 1px solid #333; padding-bottom: 10px; }
         .logo { color: var(--accent); font-weight: bold; font-size: 22px; text-transform: uppercase; letter-spacing: 2px; }
@@ -42,22 +29,22 @@
 
         .section-title { font-size: 11px; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; margin: 20px 0 10px 0; font-weight: bold; }
         
-        .canvas-box { background: white; border: 2px solid #333; margin-bottom: 15px; line-height: 0; border-radius: 4px; overflow: hidden; }
+        /* ÁREA DE DESENHO DA ESTAMPA - AGORA COM CONTROLES DE TAMANHO VISÍVEIS */
+        .canvas-box { background: white; border: 2px solid #333; margin-bottom: 10px; line-height: 0; border-radius: 4px; overflow: hidden; box-shadow: 0 4px 8px rgba(0,0,0,0.3); }
         
         .grid-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
         .btn { padding: 12px; cursor: pointer; font-weight: bold; border: none; border-radius: 4px; text-transform: uppercase; font-size: 11px; transition: 0.2s ease; }
         .btn-gray { background: #333; color: white; border: 1px solid #444; }
-        .btn-green { background: var(--accent); color: white; }
-        .btn-danger { background: #e74c3c; color: white; grid-column: 1 / -1; font-size: 10px; padding: 8px; }
+        .btn-green { background: var(--accent); color: white; margin-top: 15px; width: 100%; font-size: 13px; padding: 15px; }
+        .btn-green:hover { background: #27ae60; transform: translateY(-2px); }
+        .btn-danger { background: #e74c3c; color: white; font-size: 10px; padding: 8px; border-radius: 4px; cursor: pointer; border: none; width: 100%; text-transform: uppercase; font-weight: bold;}
 
         label { display: block; font-size: 10px; color: #aaa; margin: 15px 0 5px 0; text-transform: uppercase; font-weight: bold; }
         input[type="range"] { width: 100%; accent-color: var(--accent); cursor: pointer; }
 
-        .colors { display: flex; gap: 10px; margin-top: 5px; }
+        .colors { display: flex; gap: 8px; margin-top: 5px; flex-wrap: wrap; }
         .c-circle { width: 32px; height: 32px; border-radius: 50%; cursor: pointer; border: 2px solid #444; transition: 0.2s ease; }
         .c-circle.active { border-color: var(--accent); box-shadow: 0 0 10px rgba(46, 204, 113, 0.5); }
-
-        .env-select { width: 100%; padding: 10px; background: #333; color: white; border: 1px solid #444; border-radius: 4px; cursor: pointer; font-size: 12px; }
     </style>
 </head>
 <body>
@@ -65,10 +52,10 @@
 <aside id="sidebar">
     <div class="logo-container">
         <div class="logo">NOSTÁLGICAS</div>
-        <div class="subtitle">MOCKUP 3D - CORREÇÃO TOTAL</div>
+        <div class="subtitle">ESTÚDIO 3D - REALISTA 360°</div>
     </div>
 
-    <div class="section-title">1. Design da Estampa (22,5x9,5cm)</div>
+    <div class="section-title">1. Design da Estampa (Ajuste Tamanho/Posição)</div>
     <div class="canvas-box">
         <canvas id="c2d" width="450" height="190" style="width: 100%; height: auto;"></canvas>
     </div>
@@ -76,9 +63,9 @@
     <div class="grid-btns">
         <button class="btn btn-gray" onclick="document.getElementById('file').click()">+ Foto</button>
         <button class="btn btn-gray" onclick="addTxt()">+ Texto</button>
-        <button class="btn btn-danger" onclick="delObj()">Apagar Selecionado</button>
     </div>
     <input type="file" id="file" style="display:none" accept="image/*">
+    <button class="btn-danger" onclick="delObj()">Apagar Item Selecionado</button>
 
     <div class="section-title">2. Personalização da Caneca</div>
     <label>Cor do Interior e Alça</label>
@@ -87,35 +74,39 @@
         <div class="c-circle" style="background:#111111" onclick="changeMug(this, '#111111')"></div>
         <div class="c-circle" style="background:#ffc0cb" onclick="changeMug(this, '#ffc0cb')"></div>
         <div class="c-circle" style="background:#f1c40f" onclick="changeMug(this, '#f1c40f')"></div>
-    </div>
+        <div class="c-circle" style="background:#3498db" onclick="changeMug(this, '#3498db')"></div> </div>
 
-    <label>Girar Arte (Ajuste Horizontal)</label>
+    <label>Girar Estampa (Horizontal)</label>
     <input type="range" id="slide-rot" min="-0.5" max="0.5" step="0.001" value="0">
 
-    <div class="section-title">3. Ambiente do Mockup</div>
-    <label>Mudar Cenário de Fundo</label>
-    <select class="env-select" onchange="changeEnv(this.value)">
-        <option value="radial-gradient(circle, #ffffff 0%, #bbbbbb 100%)">Estúdio Clean (Padrão)</option>
-        <option value="wood">Mesa de Madeira Rústica</option>
-        <option value="kitchen">Cozinha Moderna</option>
-        <option value="#1a1a1a">Cinza Escuro Sólido</option>
-    </select>
-
-    <button class="btn btn-green" style="margin-top: 25px; width: 100%; padding: 15px; font-size: 13px;" onclick="baixar()">Baixar Foto p/ Cliente</button>
+    <button class="btn btn-green" onclick="baixar()">Gerar Foto p/ WhatsApp</button>
 </aside>
 
 <div id="render-3d"></div>
 
 <script>
-    // --- 1. EDITOR 2D (FABRIC.JS) ---
-    const fCanvas = new fabric.Canvas('c2d', { backgroundColor: '#ffffff' });
+    // --- 1. EDITOR 2D (FABRIC.JS) - CONTROLES DE TAMANHO HABILITADOS ---
+    const fCanvas = new fabric.Canvas('c2d', { 
+        backgroundColor: '#ffffff',
+        selection: true // Habilita a seleção de múltiplos objetos
+    });
     
+    // Configuração global para os cantos de controle serem visíveis e fáceis de clicar
+    fabric.Object.prototype.set({
+        cornerColor: '#2ecc71', // Cor verde Nostálgicas nos cantos
+        cornerStyle: 'circle', // Cantos arredondados
+        cornerSize: 10, // Tamanho fácil de clicar
+        transparentCorners: false,
+        borderColor: '#2ecc71',
+        borderDashArray: [3, 3] // Linha pontilhada na seleção
+    });
+
     // Sincronização em tempo real com o 3D
     fCanvas.on('after:render', () => { if(tex) tex.needsUpdate = true; });
 
     function addTxt() {
         const t = new fabric.IText('Seu Texto', { 
-            left: 50, top: 50, fontSize: 30, fill: '#000', fontFamily: 'Arial' 
+            left: 100, top: 70, fontSize: 30, fill: '#000', fontFamily: 'Arial Black' 
         });
         fCanvas.add(t).setActiveObject(t);
     }
@@ -124,18 +115,23 @@
     document.getElementById('file').onchange = (e) => {
         const r = new FileReader();
         r.onload = (f) => fabric.Image.fromURL(f.target.result, (img) => {
-            img.scaleToWidth(150); fCanvas.add(img).centerObject(img);
+            img.scaleToWidth(150); // Tamanho inicial inteligente
+            fCanvas.add(img).centerObject(img).setActiveObject(img);
         });
         r.readAsDataURL(e.target.files[0]);
     };
 
     // --- 2. MOTOR 3D (THREE.JS) ---
     const scene = new THREE.Scene();
+    
+    // CORREÇÃO: Fundo Exterior Branco Sólido (Infinito)
+    scene.background = new THREE.Color(0xffffff);
+    
     const container = document.getElementById('render-3d');
     
-    // Câmera equilibrada - CORREÇÃO: Posição que mostra interior e frente
+    // Câmera equilibrada - Posição inicial que mostra interior e frente
     const cam = new THREE.PerspectiveCamera(40, container.clientWidth / container.clientHeight, 0.1, 1000);
-    cam.position.set(0, 2, 7); // Levemente alta para ver o interior branco
+    cam.position.set(0, 1.8, 7); 
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
     renderer.setSize(container.clientWidth, container.clientHeight);
@@ -143,7 +139,7 @@
     renderer.outputEncoding = THREE.sRGBEncoding; 
     container.appendChild(renderer.domElement);
 
-    // Rotação 3D Livre (OrbitControls)
+    // Rotação 3D Livre (OrbitControls) - Use o scroll para zoom
     const controls = new THREE.OrbitControls(cam, renderer.domElement);
     controls.enableDamping = true; // Movimento suave
     controls.dampingFactor = 0.1;
@@ -151,13 +147,17 @@
     controls.maxDistance = 15; // Zoom mínimo
     controls.target.set(0, 0, 0); // Foco no centro da caneca
 
-    // Iluminação de Estúdio Profissional (Melhorada para o interior)
+    // Iluminação de Estúdio Profissional (Melhorada para o realismo cerâmico)
     scene.add(new THREE.AmbientLight(0xffffff, 1.0)); // Luz base forte
     const mainLight = new THREE.DirectionalLight(0xffffff, 0.6);
     mainLight.position.set(5, 10, 7); // Luz vindo de cima/direita
     scene.add(mainLight);
 
-    // --- 3. CONSTRUÇÃO DA CANECA (PROFISSIONAL - FUNDO FECHADO) ---
+    const backLight = new THREE.DirectionalLight(0xffffff, 0.3);
+    backLight.position.set(-5, 3, -5); // Luz de preenchimento atrás
+    scene.add(backLight);
+
+    // --- 3. CONSTRUÇÃO DA CANECA (SÓLIDA E REALISTA) ---
     const tex = new THREE.CanvasTexture(fCanvas.getElement());
     tex.wrapS = THREE.RepeatWrapping;
     tex.encoding = THREE.sRGBEncoding;
@@ -167,37 +167,39 @@
         map: tex, side: THREE.FrontSide, shininess: 80, specular: 0x333333 
     });
     const matPlain = new THREE.MeshPhongMaterial({ 
-        color: 0xffffff, side: THREE.FrontSide, shininess: 90, specular: 0x555555 
+        color: 0xffffff, side: THREE.FrontSide, shininess: 100, specular: 0x555555 
     });
 
     const mugGroup = new THREE.Group();
 
-    // Peças da Caneca (LatheGeometry para curvas suaves)
-    // CORREÇÃO: Perfil lateral definido com precisão para base e interior
+    // Peças da Caneca (LatheGeometry para curvas suaves e bordas arredondadas)
+    // Corpo Externo
     const ptsE = []; for(let i=0; i<=20; i++) ptsE.push(new THREE.Vector2(1.1, (i-10)*0.125));
     mugGroup.add(new THREE.Mesh(new THREE.LatheGeometry(ptsE, 64), matExt));
 
-    // Interior (Sempre liso, CORREÇÃO: Interior Branco Puro)
+    // Interior (Sempre liso, Branco Puro Resinada)
     const ptsI = []; for(let i=0; i<=18; i++) ptsI.push(new THREE.Vector2(1.05, (i-9)*0.12));
     const innerMug = new THREE.Mesh(new THREE.LatheGeometry(ptsI, 64), matPlain);
     innerMug.rotation.x = Math.PI; // Inverte para as faces ficarem para dentro
     mugGroup.add(innerMug);
 
-    // Borda Superior (Fecha o topo)
-    const ring = new THREE.Mesh(new THREE.RingGeometry(1.05, 1.1, 64), matPlain);
+    // Borda Superior Arredondada
+    const ringGeo = new THREE.RingGeometry(1.05, 1.1, 64);
+    const ringMat = new THREE.MeshPhongMaterial({ color: 0xffffff, side: THREE.DoubleSide, shininess: 100 });
+    const ring = new THREE.Mesh(ringGeo, ringMat);
     ring.rotation.x = -Math.PI / 2;
     ring.position.y = 1.25;
     mugGroup.add(ring);
 
-    // Fundo da Caneca (CORREÇÃO: Fundo Fechado e Arredondado)
+    // Fundo da Caneca (Fechado e Selado)
     const geoBottom = new THREE.CircleGeometry(1.1, 64);
     const mugBottom = new THREE.Mesh(geoBottom, matPlain);
     mugBottom.rotation.x = -Math.PI / 2;
     mugBottom.position.y = -1.25; // Base fechada
     mugGroup.add(mugBottom);
 
-    // Alça (Torus)
-    const geoHandle = new THREE.TorusGeometry(0.75, 0.13, 16, 100, Math.PI);
+    // Alça Arredondada (Torus)
+    const geoHandle = new THREE.TorusGeometry(0.75, 0.14, 16, 100, Math.PI);
     const mugHandle = new THREE.Mesh(geoHandle, matPlain);
     mugHandle.position.set(1.1, 0, 0);
     mugHandle.rotation.z = -Math.PI / 2;
@@ -205,11 +207,12 @@
 
     scene.add(mugGroup);
 
-    // Sombra de Chão para Realismo
+    // CORREÇÃO: Sombra Projetada no Chão Branco para Realismo (Contato)
     const shadowGeo = new THREE.CircleGeometry(1.2, 32);
-    const shadowMat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.2 });
+    const shadowMat = new THREE.MeshBasicMaterial({ color: 0xcccccc, transparent: true, opacity: 0.25 });
     const shadow = new THREE.Mesh(shadowGeo, shadowMat);
-    shadow.rotation.x = -Math.PI/2; shadow.position.y = -1.26;
+    shadow.rotation.x = -Math.PI/2; 
+    shadow.position.y = -1.26;
     scene.add(shadow);
 
     // --- 4. FUNÇÕES DO MOCKUP ---
@@ -217,20 +220,9 @@
     // Mudar Cor do Interior/Alça
     window.changeMug = (btn, cor) => {
         matPlain.color.set(cor);
+        ringMat.color.set(cor); // Altera a borda superior também
         document.querySelectorAll('.c-circle').forEach(c => c.classList.remove('active'));
         btn.classList.add('active');
-    };
-
-    // Mudar Ambiente (Cenário)
-    window.changeEnv = (val) => {
-        const container = document.getElementById('render-3d');
-        if (val === 'wood') {
-            container.style.background = "url('https://img.freepik.com/fotos-premium/textura-de-madeira-marrom-mdf-para-fundo_1012904-20.jpg') center/cover";
-        } else if (val === 'kitchen') {
-            container.style.background = "url('https://img.freepik.com/fotos-premium/cozinha-moderna-vazia-com-bancadas-e-armarios_1303212-3213.jpg') center/cover";
-        } else {
-            container.style.background = val; // Cores sólidas ou radial gradient
-        }
     };
 
     // Baixar Mockup
@@ -239,13 +231,13 @@
         fCanvas.discardActiveObject(); fCanvas.renderAll();
         setTimeout(() => {
             const a = document.createElement('a');
-            a.download = 'Mockup_Nostalgicas.png';
+            a.download = 'Nostalgicas_Mockup_3D.png';
             a.href = renderer.domElement.toDataURL('image/png');
             a.click();
         }, 150);
     };
 
-    // Slider de Rotação da Arte (Ajuste Horizontal)
+    // Slider de Rotação da Arte (Ajuste Horizontal Fino)
     document.getElementById('slide-rot').oninput = (e) => tex.offset.x = parseFloat(e.target.value);
 
     // Loop de Animação
