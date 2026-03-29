@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nostálgicas Studio - Mockup Profissional</title>
+    <title>Nostálgicas Studio - Texturização Direta UV</title>
     <script type="importmap">
       { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js", "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/" } }
     </script>
@@ -11,26 +11,19 @@
     <style>
         :root { --primary: #3376e3; --bg: #1a1a1b; --panel: #ffffff; }
         body { margin: 0; display: flex; height: 100vh; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); overflow: hidden; }
-        
         #render-3d { flex: 1; background: #ffffff; cursor: grab; }
         #render-3d:active { cursor: grabbing; }
-
         #sidebar { width: 380px; background: var(--panel); border-left: 1px solid #ddd; padding: 25px; display: flex; flex-direction: column; overflow-y: auto; box-shadow: -5px 0 15px rgba(0,0,0,0.1); }
-        
-        h2 { color: var(--primary); margin: 0 0 20px 0; font-size: 22px; text-transform: uppercase; letter-spacing: 1px; border-bottom: 2px solid #eee; padding-bottom: 10px; }
-        
-        .section-title { font-size: 12px; font-weight: 800; color: #888; text-transform: uppercase; margin: 20px 0 10px 0; display: block; }
-        
+        h2 { color: var(--primary); margin: 0 0 20px 0; font-size: 22px; text-transform: uppercase; letter-spacing: 1px; border-bottom: 2px solid #eee; padding-bottom: 10px; text-align: center;}
+        .section-title { font-size: 11px; font-weight: 800; color: #888; text-transform: uppercase; margin: 20px 0 10px 0; display: block; letter-spacing: 1px;}
         .canvas-container { border: 2px dashed #ccc; margin-bottom: 15px; border-radius: 8px; overflow: hidden; background: #f9f9f9; }
-        
-        .btn { background: var(--primary); color: white; border: none; padding: 14px; width: 100%; font-weight: bold; cursor: pointer; border-radius: 6px; transition: 0.3s; margin-bottom: 10px; font-size: 14px; }
+        .btn { background: var(--primary); color: white; border: none; padding: 14px; width: 100%; font-weight: bold; cursor: pointer; border-radius: 6px; transition: 0.3s; margin-bottom: 10px; font-size: 14px; text-transform: uppercase;}
         .btn:hover { background: #2559b5; filter: brightness(1.1); }
         .btn-secondary { background: #4a5568; }
         .btn-success { background: #2f855a; margin-top: 15px; }
-
         .control-group { background: #f8f9fa; padding: 12px; border-radius: 8px; margin-bottom: 10px; border: 1px solid #edf2f7; }
-        label { font-size: 11px; font-weight: bold; display: flex; justify-content: space-between; margin-bottom: 5px; color: #444; }
-        input[type="range"] { width: 100%; cursor: pointer; accent-color: var(--primary); }
+        label { font-size: 11px; font-weight: bold; display: flex; justify-content: space-between; margin-bottom: 5px; color: #444; text-transform: uppercase;}
+        input[type="range"] { width: 100%; cursor: pointer; accent-color: var(--primary); margin-bottom: 8px;}
     </style>
 </head>
 <body>
@@ -44,194 +37,26 @@
     <button class="btn" onclick="document.getElementById('input-imagem').click()">📂 CARREGAR ARTE</button>
 
     <div class="canvas-container">
-        <canvas id="editor-2d" width="330" height="150"></canvas>
+        <canvas id="canvas2d" width="330" height="150"></canvas>
     </div>
 
-    <span class="section-title">Ajustes da Caneca</span>
+    <span class="section-title">Controle da Caneca</span>
     <div class="control-group">
-        <label>Tamanho do Modelo <span>(Escala)</span></label>
+        <label>Tamanho da Caneca</label>
         <input type="range" id="escala-caneca" min="10" max="150" value="50">
         
-        <label>Brilho da Porcelana <span>(Luz)</span></label>
-        <input type="range" id="luz-int" min="0.5" max="4" step="0.1" value="2">
+        <label>Brilho da Porcelana</label>
+        <input type="range" id="luz-int" min="0.5" max="4" step="0.1" value="2.2">
     </div>
 
-    <span class="section-title">Ajustes da Estampa</span>
+    <span class="section-title">Controle da Arte (Projeção Direta)</span>
     <div class="control-group">
-        <label>Envelopamento <span>(Abertura)</span></label>
-        <input type="range" id="abertura-arte" min="1.0" max="6.28" step="0.05" value="4.0">
-        
-        <label>Girar Arte <span>(Posição)</span></label>
-        <input type="range" id="rotacao" min="-6.28" max="6.28" step="0.01" value="0">
+        <label>Girar Posição na Caneca</label>
+        <input type="range" id="rotacao" min="-3.14" max="3.14" step="0.01" value="0">
 
         <label>Altura Vertical</label>
-        <input type="range" id="altura" min="-2.5" max="2.5" step="0.01" value="0">
+        <input type="range" id="altura" min="-0.5" max="0.5" step="0.01" value="0">
 
-        <label>Zoom Interno da Arte</label>
-        <input type="range" id="zoom-arte" min="0.5" max="1.5" step="0.01" value="1.0">
+        <label>Zoom/Tamanho da Arte</label>
+        <input type="range" id="zoom-arte" min="0.2" max="2" step="0.01" value="1.0">
     </div>
-
-    <span class="section-title">Visualização</span>
-    <div class="control-group">
-        <label>Distância da Câmera <span>(Zoom)</span></label>
-        <input type="range" id="zoom-camera" min="1" max="15" step="0.1" value="6">
-    </div>
-
-    <button class="btn btn-secondary" onclick="fCanvas.discardActiveObject(); fCanvas.requestRenderAll();">✨ Limpar Seleção</button>
-    <button class="btn btn-success" onclick="salvarFoto()">📸 SALVAR FOTO PARA CLIENTE</button>
-</aside>
-
-<script type="module">
-    import * as THREE from 'three';
-    import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
-    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-
-    let scene, camera, renderer, controls, caneca, estampa, fCanvas, lastSize, ambientLight;
-
-    // --- CONFIGURAÇÃO DO EDITOR 2D ---
-    fCanvas = new fabric.Canvas('editor-2d', { backgroundColor: '#ffffff' });
-    fCanvas.on('after:render', () => {
-        if (estampa) {
-            const texture = new THREE.CanvasTexture(fCanvas.getElement());
-            texture.colorSpace = THREE.SRGBColorSpace;
-            texture.anisotropy = 16;
-            estampa.material.map = texture;
-            estampa.material.needsUpdate = true;
-        }
-    });
-
-    // --- CONFIGURAÇÃO DO MOTOR 3D ---
-    scene = new THREE.Scene();
-    scene.background = new THREE.Color(0xffffff);
-    
-    camera = new THREE.PerspectiveCamera(40, (window.innerWidth - 380) / window.innerHeight, 0.1, 1000);
-    camera.position.set(0, 0, 6);
-
-    renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
-    renderer.setSize(window.innerWidth - 380, window.innerHeight);
-    renderer.setPixelRatio(window.devicePixelRatio);
-    document.getElementById('render-3d').appendChild(renderer.domElement);
-
-    controls = new OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
-
-    ambientLight = new THREE.AmbientLight(0xffffff, 2);
-    scene.add(ambientLight);
-
-    const sunLight = new THREE.DirectionalLight(0xffffff, 0.5);
-    sunLight.position.set(5, 5, 5);
-    scene.add(sunLight);
-
-    // --- FUNÇÃO PARA CRIAR/ATUALIZAR O ENCAIXE DA ARTE ---
-    function atualizarGeometriaEstampa() {
-        if (!caneca || !lastSize) return;
-        
-        const abertura = parseFloat(document.getElementById('abertura-arte').value);
-        const raio = (lastSize.x / 2) * 1.012; // Ajuste fino para não "entrar" na caneca
-        const altura = lastSize.y * 0.88;
-
-        if (estampa) {
-            scene.remove(estampa);
-            estampa.geometry.dispose();
-        }
-
-        const geo = new THREE.CylinderGeometry(raio, raio, altura, 80, 1, true, -(abertura/2), abertura);
-        const mat = new THREE.MeshStandardMaterial({ 
-            transparent: true, 
-            side: THREE.DoubleSide,
-            roughness: 0.3,
-            metalness: 0.1
-        });
-        
-        estampa = new THREE.Mesh(geo, mat);
-        // Preserva a rotação e altura atual ao atualizar a geometria
-        estampa.rotation.y = parseFloat(document.getElementById('rotacao').value);
-        estampa.position.y = parseFloat(document.getElementById('altura').value);
-        const z = parseFloat(document.getElementById('zoom-arte').value);
-        estampa.scale.set(z, z, z);
-        
-        scene.add(estampa);
-    }
-
-    // --- CARREGAMENTO DO MODELO ---
-    new OBJLoader().load('mug.obj', (obj) => {
-        caneca = obj;
-        caneca.scale.set(50, 50, 50);
-        
-        const box = new THREE.Box3().setFromObject(caneca);
-        const center = box.getCenter(new THREE.Vector3());
-        lastSize = box.getSize(new THREE.Vector3());
-        
-        caneca.position.sub(center);
-        caneca.traverse(c => {
-            if (c.isMesh) {
-                c.material = new THREE.MeshPhysicalMaterial({ 
-                    color: 0xffffff, 
-                    roughness: 0.15,
-                    clearcoat: 1.0
-                });
-            }
-        });
-        scene.add(caneca);
-        atualizarGeometriaEstampa();
-    }, undefined, (error) => console.error("Erro ao carregar mug.obj. Verifique o nome do arquivo."));
-
-    // --- EVENTOS DOS CONTROLES ---
-    document.getElementById('escala-caneca').oninput = (e) => {
-        if (caneca) {
-            const s = parseFloat(e.target.value);
-            caneca.scale.set(s, s, s);
-            const box = new THREE.Box3().setFromObject(caneca);
-            lastSize = box.getSize(new THREE.Vector3());
-            atualizarGeometriaEstampa();
-        }
-    };
-
-    document.getElementById('abertura-arte').oninput = atualizarGeometriaEstampa;
-    document.getElementById('rotacao').oninput = (e) => { if(estampa) estampa.rotation.y = parseFloat(e.target.value); };
-    document.getElementById('altura').oninput = (e) => { if(estampa) estampa.position.y = parseFloat(e.target.value); };
-    document.getElementById('zoom-arte').oninput = (e) => { if(estampa) { const s = parseFloat(e.target.value); estampa.scale.set(s,s,s); } };
-    document.getElementById('zoom-camera').oninput = (e) => { camera.position.z = parseFloat(e.target.value); };
-    document.getElementById('luz-int').oninput = (e) => { ambientLight.intensity = parseFloat(e.target.value); };
-
-    // --- SISTEMA DE UPLOAD ---
-    document.getElementById('input-imagem').onchange = (e) => {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-            fabric.Image.fromURL(event.target.result, (img) => {
-                img.scaleToWidth(200);
-                fCanvas.add(img);
-                fCanvas.centerObject(img);
-                fCanvas.setActiveObject(img);
-            });
-        };
-        reader.readAsDataURL(e.target.files[0]);
-    };
-
-    // --- FUNÇÃO PARA SALVAR FOTO ---
-    window.salvarFoto = () => {
-        fCanvas.discardActiveObject();
-        fCanvas.requestRenderAll();
-        setTimeout(() => {
-            const link = document.createElement('a');
-            link.download = 'Mockup_Nostalgicas.png';
-            link.href = renderer.domElement.toDataURL('image/png');
-            link.click();
-        }, 100);
-    };
-
-    function animate() {
-        requestAnimationFrame(animate);
-        controls.update();
-        renderer.render(scene, camera);
-    }
-    animate();
-
-    window.onresize = () => {
-        camera.aspect = (window.innerWidth - 380) / window.innerHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(window.innerWidth - 380, window.innerHeight);
-    };
-</script>
-</body>
-</html>
