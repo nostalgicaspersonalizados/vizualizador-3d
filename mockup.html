@@ -150,4 +150,23 @@
     document.getElementById('zoom').addEventListener('input', (e) => {
         if (estampa) {
             const s = parseFloat(e.target.value);
-            estampa.scale.set(
+            estampa.scale.set(s, s, s);
+        }
+    });
+
+    function animate() {
+        requestAnimationFrame(animate);
+        controls.update();
+        renderer.render(scene, camera);
+    }
+    animate();
+
+    // Ajuste de tela
+    window.addEventListener('resize', () => {
+        camera.aspect = (window.innerWidth - 350) / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth - 350, window.innerHeight);
+    });
+</script>
+</body>
+</html>
