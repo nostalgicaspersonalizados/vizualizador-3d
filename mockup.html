@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Nostálgicas - Studio Pro 3D</title>
+    <title>Nostálgicas - Studio Pro (Mapeamento Nativo)</title>
     <script type="importmap">
       { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js", "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/" } }
     </script>
@@ -31,15 +31,15 @@
     <h2>Ajuste de Estampa</h2>
     
     <input type="file" id="fileInput" style="display:none" accept="image/*">
-    <button class="btn" onclick="document.getElementById('fileInput').click()">1. ESCOLHER IMAGEM</button>
+    <button class="btn" onclick="document.getElementById('fileInput').click()">1. CARREGAR IMAGEM</button>
     
     <div class="instrucoes">
-        <strong>Dicas de uso:</strong><br>
-        • Puxe os <b>quadrados laterais</b> para esticar.<br>
-        • Clique no fundo branco do editor para esconder as marcações azuis.
+        <strong>Dica de Precisão:</strong><br>
+        • A arte está sendo mapeada DIRETAMENTE no modelo 3D.<br>
+        • Clique no espaço branco para esconder as alças azuis.
     </div>
 
-    <div style="font-size: 11px; color: #a0aec0; font-weight: bold;">ÁREA DA CANECA (22.5 x 9.5cm)</div>
+    <div style="font-size: 11px; color: #a0aec0; font-weight: bold;">ÁREA DE PROJEÇÃO</div>
     <div class="editor-wrapper">
         <canvas id="fabricCanvas" width="350" height="147"></canvas>
     </div>
@@ -49,136 +49,4 @@
 
 <script type="module">
     import * as THREE from 'three';
-    import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
-    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-
-    let scene, camera, renderer, controls, mug, decal, fCanvas;
-
-    // --- EDITOR 2D (Fabric.js) ---
-    fCanvas = new fabric.Canvas('fabricCanvas', { backgroundColor: '#ffffff', preserveObjectStacking: true });
-    
-    fabric.Object.prototype.set({
-        transparentCorners: false,
-        cornerColor: '#3376e3',
-        borderColor: '#3376e3',
-        cornerSize: 10,
-        cornerStyle: 'rect',
-        lockUniScaling: false // Permite esticar livremente
-    });
-
-    // Função para tirar os pontos azuis
-    window.limparSelecao = function() {
-        fCanvas.discardActiveObject();
-        fCanvas.requestRenderAll();
-    };
-
-    // Atualiza o 3D sempre que algo mudar no 2D
-    fCanvas.on('after:render', () => {
-        if (!decal) return;
-        const texture = new THREE.CanvasTexture(fCanvas.getElement());
-        texture.colorSpace = THREE.SRGBColorSpace; // Garante cores vivas e reais
-        texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
-        decal.material.map = texture;
-        decal.material.needsUpdate = true;
-    });
-
-    // Tira a seleção ao clicar no fundo branco do editor 2D
-    fCanvas.on('mouse:down', function(options) {
-        if (!options.target) {
-            window.limparSelecao();
-        }
-    });
-
-    // --- MUNDO 3D (Three.js) ---
-    scene = new THREE.Scene();
-    
-    camera = new THREE.PerspectiveCamera(35, (window.innerWidth - 400) / window.innerHeight, 0.1, 1000);
-    
-    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setSize(window.innerWidth - 400, window.innerHeight);
-    renderer.setPixelRatio(window.devicePixelRatio);
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    document.getElementById('canvas-container').appendChild(renderer.domElement);
-
-    scene.add(new THREE.AmbientLight(0xffffff, 1.2));
-    const light = new THREE.DirectionalLight(0xffffff, 0.8);
-    light.position.set(5, 5, 5);
-    scene.add(light);
-
-    controls = new OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
-
-    const loader = new OBJLoader();
-    loader.load('mug.obj', (obj) => {
-        mug = obj;
-
-        // Centralização absoluta do modelo
-        const box = new THREE.Box3().setFromObject(mug);
-        const center = box.getCenter(new THREE.Vector3());
-        const size = box.getSize(new THREE.Vector3());
-        
-        mug.position.sub(center);
-
-        mug.traverse(child => {
-            if (child.isMesh) {
-                child.material = new THREE.MeshPhysicalMaterial({ 
-                    color: 0xffffff, roughness: 0.1, clearcoat: 1.0 
-                });
-            }
-        });
-        scene.add(mug);
-
-        // CORREÇÃO MATEMÁTICA DA DISTORÇÃO DA ARTE
-        const radius = size.x / 1.95; 
-        const height = size.y * 0.88; 
-        
-        // Calculamos o ângulo exato para a imagem não achatar
-        // Proporção do editor 2D: 350 / 147 = ~2.38
-        const aspectCanvas = 350 / 147; 
-        const thetaLength = (height * aspectCanvas) / radius;
-
-        // Cria o cilindro respeitando a matemática exata da sua imagem
-        const geo = new THREE.CylinderGeometry(radius, radius, height, 64, 1, true, -thetaLength/2, thetaLength);
-        
-        decal = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ 
-            transparent: true, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -1 
-        }));
-        // Rotaciona para ficar exatamente de frente para a câmera
-        decal.rotation.y = Math.PI / 2;
-        scene.add(decal);
-
-        camera.position.set(0, 0, size.z * 4.5);
-    });
-
-    // Carregamento da imagem
-    document.getElementById('fileInput').onchange = (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = (f) => {
-            fabric.Image.fromURL(f.target.result, (img) => {
-                img.scaleToHeight(140);
-                img.set({ left: 10, top: 5 });
-                fCanvas.add(img);
-                fCanvas.setActiveObject(img);
-            });
-        };
-        reader.readAsDataURL(file);
-    };
-
-    function animate() {
-        requestAnimationFrame(animate);
-        if(controls) controls.update();
-        renderer.render(scene, camera);
-    }
-    animate();
-
-    window.addEventListener('resize', () => {
-        const w = window.innerWidth - 400;
-        camera.aspect = w / window.innerHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(w, window.innerHeight);
-    });
-</script>
-</body>
-</html>
+    import { OBJLoader } from 'three/addons
