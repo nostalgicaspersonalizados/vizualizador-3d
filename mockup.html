@@ -3,24 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nostálgicas Studio - Sistema Nativo</title>
-    <script type="importmap">
-      { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js", "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/" } }
-    </script>
+    <title>Nostálgicas Studio - Oficial</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/controls/OrbitControls.js"></script>
     <script src="https://unpkg.com/fabric@5.3.0/dist/fabric.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
     <style>
-        :root { --panel: #222; --accent: #ffffff; }
-        body { margin: 0; display: flex; height: 100vh; font-family: 'Segoe UI', sans-serif; background: #111; color: white; overflow: hidden; }
-        #render-3d { flex: 1; background: #ffffff; }
-        #sidebar { width: 380px; background: var(--panel); padding: 20px; border-left: 1px solid #444; display: flex; flex-direction: column; }
-        .canvas-area { background: #333; padding: 5px; border: 1px solid #555; margin-bottom: 20px; position: relative; }
-        .dim-label { position: absolute; top: -20px; left: 0; font-size: 10px; color: #888; text-transform: uppercase; }
-        .button-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .btn { background: transparent; color: white; border: 1.5px solid white; padding: 12px; cursor: pointer; font-weight: bold; font-size: 11px; text-transform: uppercase; display: flex; align-items: center; justify-content: center; gap: 8px; }
-        .btn-full { grid-column: span 2; background: #2f855a; border: none; margin-top: 10px; }
-        .controls { margin-top: 25px; border-top: 1px solid #444; padding-top: 20px; }
-        input[type="range"] { width: 100%; margin-bottom: 20px; accent-color: white; }
+        :root { --panel: #222; }
+        body { margin: 0; display: flex; height: 100vh; font-family: sans-serif; background: #111; color: white; overflow: hidden; }
+        #render-3d { flex: 1; background: #ffffff; cursor: move; }
+        #sidebar { width: 350px; background: var(--panel); padding: 15px; border-left: 1px solid #444; display: flex; flex-direction: column; z-index: 10; }
+        .canvas-area { background: #333; padding: 5px; border: 1px solid #555; margin-bottom: 15px; }
+        .btn { background: #444; color: white; border: 1px solid #666; padding: 10px; cursor: pointer; width: 100%; margin-bottom: 8px; font-weight: bold; text-transform: uppercase; font-size: 11px; transition: 0.2s; }
+        .btn:hover { background: #555; border-color: #fff; }
+        .btn-save { background: #28a745; border: none; margin-top: 10px; padding: 15px; }
+        .btn-save:hover { background: #218838; }
+        label { font-size: 10px; color: #888; display: block; margin: 10px 0 5px; }
+        input[type="range"] { width: 100%; accent-color: #28a745; }
     </style>
 </head>
 <body>
@@ -28,122 +28,149 @@
 <div id="render-3d"></div>
 
 <aside id="sidebar">
+    <div style="font-weight: bold; color: #28a745; margin-bottom: 10px;">NOSTÁLGICAS STUDIO</div>
     <div class="canvas-area">
-        <span class="dim-label">Área de Impressão: 22,5 x 9,5 cm</span>
-        <canvas id="canvas2d" width="450" height="190"></canvas>
+        <canvas id="canvas2d" width="300" height="126"></canvas>
     </div>
 
-    <div class="button-grid">
-        <input type="file" id="up-img" style="display:none" accept="image/*">
-        <button class="btn" onclick="document.getElementById('up-img').click()"><i class="fa-regular fa-image"></i> IMAGEM</button>
-        <button class="btn" onclick="addText()"><i class="fa-solid fa-font"></i> TEXTO</button>
-        <button class="btn-full btn" onclick="takePhoto()"><i class="fa-solid fa-camera"></i> SALVAR PREVIEW</button>
-    </div>
+    <input type="file" id="up-img" style="display:none" accept="image/*">
+    <button class="btn" onclick="document.getElementById('up-img').click()"><i class="fa-regular fa-image"></i> ADICIONAR IMAGEM</button>
+    <button class="btn" onclick="addText()"><i class="fa-solid fa-font"></i> ADICIONAR TEXTO</button>
+    
+    <button class="btn btn-save" onclick="takePhoto()"><i class="fa-solid fa-camera"></i> SALVAR FOTO PARA CLIENTE</button>
 
-    <div class="controls">
-        <label style="font-size: 10px; color: #aaa;">GIRAR ARTE (HORIZONTAL)</label>
-        <input type="range" id="rot" min="-0.5" max="0.5" step="0.001" value="0">
-        <label style="font-size: 10px; color: #aaa;">ZOOM</label>
-        <input type="range" id="cam-z" min="3" max="10" step="0.1" value="6">
-    </div>
+    <label>GIRAR ESTAMPA</label>
+    <input type="range" id="rot" min="-0.5" max="0.5" step="0.001" value="0">
+    
+    <label>ZOOM</label>
+    <input type="range" id="cam-z" min="3" max="10" step="0.1" value="6">
 </aside>
 
-<script type="module">
-    import * as THREE from 'three';
-    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-
-    // 1. FABRIC.JS (Editor 2D)
+<script>
+    // --- 1. CONFIGURAÇÃO DO EDITOR 2D (FABRIC) ---
     const fCanvas = new fabric.Canvas('canvas2d', { backgroundColor: '#fff' });
-    fCanvas.on('after:render', () => { if(texture3d) texture3d.needsUpdate = true; });
+    
+    // Atualiza o 3D sempre que algo mudar no editor
+    fCanvas.on('after:render', () => { 
+        if(texture3d) texture3d.needsUpdate = true; 
+    });
 
-    // 2. THREE.JS (Visualização 3D)
+    // --- 2. CONFIGURAÇÃO DO AMBIENTE 3D (THREE.JS) ---
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0xffffff);
-    const camera = new THREE.PerspectiveCamera(40, (window.innerWidth - 380) / window.innerHeight, 0.1, 1000);
+
+    const container = document.getElementById('render-3d');
+    const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
     camera.position.set(0, 0, 6);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
-    renderer.setSize(window.innerWidth - 380, window.innerHeight);
+    renderer.setSize(container.clientWidth, container.clientHeight);
     renderer.setPixelRatio(window.devicePixelRatio);
-    document.getElementById('render-3d').appendChild(renderer.domElement);
+    container.appendChild(renderer.domElement);
 
-    const controls = new OrbitControls(camera, renderer.domElement);
-    scene.add(new THREE.AmbientLight(0xffffff, 1.5));
-    const light = new THREE.DirectionalLight(0xffffff, 1);
+    // Luzes
+    scene.add(new THREE.AmbientLight(0xffffff, 1.2));
+    const light = new THREE.DirectionalLight(0xffffff, 0.8);
     light.position.set(5, 5, 5);
     scene.add(light);
 
-    // 3. TEXTURA E SHADER PARA ÁREA DE 22,5cm
+    // Controles de mouse
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+
+    // --- 3. CRIAÇÃO DA CANECA (GEOMETRIA NATIVA) ---
     const texture3d = new THREE.CanvasTexture(fCanvas.getElement());
     texture3d.colorSpace = THREE.SRGBColorSpace;
-    texture3d.wrapS = THREE.ClampToEdgeWrapping; 
-    texture3d.wrapT = THREE.ClampToEdgeWrapping;
 
-    const mat = new THREE.MeshPhongMaterial({
+    // Material da parte de fora (com a arte)
+    const matOut = new THREE.MeshPhongMaterial({
         color: 0xffffff,
         map: texture3d,
-        side: THREE.FrontSide, // Garante que não apareça por dentro
-        shininess: 80
+        shininess: 60
     });
 
-    // 4. CONSTRUÇÃO DA CANECA (Sem arquivos externos!)
-    // Corpo da caneca (Cilindro)
-    const geometry = new THREE.CylinderGeometry(1, 1, 2.2, 64, 1, true);
-    
-    // Ajuste do Mapeamento UV para cobrir 22,5cm (deixa espaço para a alça)
-    const uv = geometry.attributes.uv;
-    for (let i = 0; i < uv.count; i++) {
-        let u = uv.getX(i);
-        // Ajusta a escala horizontal para os 22.5cm
-        uv.setX(i, u * 1.1 - 0.05); 
-    }
+    // Material da parte de dentro e alça (branco liso)
+    const matPlain = new THREE.MeshPhongMaterial({ color: 0xffffff });
 
-    const canecaCorpo = new THREE.Mesh(geometry, mat);
-    scene.add(canecaCorpo);
+    // Grupo que contém todas as partes da caneca
+    const mugGroup = new THREE.Group();
 
-    // Interior da caneca (Cilindro sem textura)
-    const interiorGeo = new THREE.CylinderGeometry(0.95, 0.95, 2.15, 64, 1, true);
-    const interiorMat = new THREE.MeshPhongMaterial({ color: 0xffffff });
-    const interior = new THREE.Mesh(interiorGeo, interiorMat);
-    interior.rotation.x = Math.PI; // Inverte para as faces ficarem para dentro
-    scene.add(interior);
+    // Cilindro Externo (Corpo) - Proporção ajustada para 22.5x9.5
+    const geoOut = new THREE.CylinderGeometry(1, 1, 2.2, 64, 1, true);
+    const bodyOut = new THREE.Mesh(geoOut, matOut);
+    mugGroup.add(bodyOut);
 
-    // Fundo da caneca
-    const fundoGeo = new THREE.CircleGeometry(1, 64);
-    const fundo = new THREE.Mesh(fundoGeo, interiorMat);
-    fundo.rotation.x = Math.PI / 2;
-    fundo.position.y = -1.1;
-    scene.add(fundo);
+    // Cilindro Interno
+    const geoIn = new THREE.CylinderGeometry(0.95, 0.95, 2.15, 64, 1, true);
+    const bodyIn = new THREE.Mesh(geoIn, matPlain);
+    bodyIn.rotation.x = Math.PI; 
+    mugGroup.add(bodyIn);
 
-    // Alça (Torus)
-    const alcaGeo = new THREE.TorusGeometry(0.6, 0.12, 16, 32, Math.PI);
-    const alca = new THREE.Mesh(alcaGeo, interiorMat);
-    alca.position.set(1, 0, 0);
-    alca.rotation.z = -Math.PI / 2;
-    scene.add(alca);
+    // Fundo
+    const geoBottom = new THREE.CircleGeometry(1, 64);
+    const bottom = new THREE.Mesh(geoBottom, matPlain);
+    bottom.rotation.x = -Math.PI / 2;
+    bottom.position.y = -1.1;
+    mugGroup.add(bottom);
 
-    // 5. FUNÇÕES
-    window.addText = () => { fCanvas.add(new fabric.IText('Nostálgicas', {left: 150, top: 70, fontSize: 30})); };
-    document.getElementById('up-img').onchange = (e) => {
-        const r = new FileReader();
-        r.onload = (f) => fabric.Image.fromURL(f.target.result, (img) => {
-            img.scaleToWidth(200); fCanvas.add(img).centerObject(img);
-        });
-        r.readAsDataURL(e.target.files[0]);
+    // Alça
+    const geoHandle = new THREE.TorusGeometry(0.6, 0.12, 16, 32, Math.PI);
+    const handle = new THREE.Mesh(geoHandle, matPlain);
+    handle.position.set(1.0, 0, 0);
+    handle.rotation.z = -Math.PI / 2;
+    mugGroup.add(handle);
+
+    scene.add(mugGroup);
+
+    // --- 4. FUNÇÕES DE INTERAÇÃO ---
+    window.addText = () => {
+        fCanvas.add(new fabric.IText('Nostálgicas', {
+            left: 50, top: 50, fontSize: 25, fontFamily: 'Arial'
+        }));
     };
+
+    document.getElementById('up-img').onchange = (e) => {
+        const reader = new FileReader();
+        reader.onload = (f) => {
+            fabric.Image.fromURL(f.target.result, (img) => {
+                img.scaleToWidth(150);
+                fCanvas.add(img).centerObject(img);
+            });
+        };
+        reader.readAsDataURL(e.target.files[0]);
+    };
+
     window.takePhoto = () => {
         fCanvas.discardActiveObject(); fCanvas.renderAll();
         setTimeout(() => {
-            const a = document.createElement('a'); a.download = 'Preview_Nostalgicas.png';
-            a.href = renderer.domElement.toDataURL(); a.click();
+            const link = document.createElement('a');
+            link.download = 'Mockup_Nostalgicas.png';
+            link.href = renderer.domElement.toDataURL();
+            link.click();
         }, 100);
     };
 
-    document.getElementById('rot').oninput = (e) => texture3d.offset.x = parseFloat(e.target.value);
-    document.getElementById('cam-z').oninput = (e) => camera.position.z = e.target.value;
+    // Sliders
+    document.getElementById('rot').oninput = (e) => {
+        texture3d.offset.x = parseFloat(e.target.value);
+    };
+    document.getElementById('cam-z').oninput = (e) => {
+        camera.position.z = e.target.value;
+    };
 
-    function animate() { requestAnimationFrame(animate); controls.update(); renderer.render(scene, camera); }
+    // Loop de Animação
+    function animate() {
+        requestAnimationFrame(animate);
+        controls.update();
+        renderer.render(scene, camera);
+    }
     animate();
+
+    // Ajuste de Janela
+    window.onresize = () => {
+        camera.aspect = container.clientWidth / container.clientHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(container.clientWidth, container.clientHeight);
+    };
 </script>
 </body>
 </html>
