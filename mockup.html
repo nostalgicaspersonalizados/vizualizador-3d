@@ -2,51 +2,80 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Nostálgicas - Studio Pro (Mapeamento Nativo)</title>
+    <title>Nostálgicas Studio - Correção Alça</title>
     <script type="importmap">
       { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js", "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/" } }
     </script>
     <script src="https://unpkg.com/fabric@5.3.0/dist/fabric.min.js"></script>
     <style>
-        body { margin: 0; display: flex; height: 100vh; font-family: 'Segoe UI', sans-serif; background: #f0f2f5; overflow: hidden; }
-        #canvas-container { flex: 1; background: radial-gradient(circle, #ffffff 0%, #cbd5e0 100%); position: relative; }
-        #controls { width: 400px; background: #fff; border-left: 1px solid #ddd; padding: 20px; display: flex; flex-direction: column; box-shadow: -4px 0 10px rgba(0,0,0,0.05); z-index: 10; }
-        
-        h2 { font-size: 18px; color: #333; margin-top: 0; border-bottom: 2px solid #3376e3; padding-bottom: 10px; }
-        
-        .btn { background: #3376e3; color: white; border: none; padding: 14px; cursor: pointer; font-weight: bold; border-radius: 6px; width: 100%; margin-bottom: 10px; text-transform: uppercase; transition: 0.2s; }
-        .btn:hover { background: #2b6cb0; }
-        .btn-secundario { background: #edf2f7; color: #4a5568; }
-        .btn-secundario:hover { background: #e2e8f0; }
-
-        .editor-wrapper { border: 2px dashed #cbd5e0; background: #fff; margin: 15px 0; border-radius: 8px; overflow: hidden; }
-        .instrucoes { font-size: 12px; color: #718096; line-height: 1.5; background: #f7fafc; padding: 12px; border-radius: 6px; margin-bottom: 15px; }
+        body { margin: 0; display: flex; height: 100vh; font-family: sans-serif; background: #f0f2f5; overflow: hidden; }
+        #viewport { flex: 1; background: radial-gradient(circle, #ffffff 0%, #cbd5e0 100%); }
+        #sidebar { width: 380px; background: #fff; border-left: 1px solid #ddd; padding: 20px; display: flex; flex-direction: column; box-shadow: -5px 0 15px rgba(0,0,0,0.1); z-index: 10; }
+        .editor-box { border: 2px solid #3376e3; background: #fff; border-radius: 8px; overflow: hidden; margin: 15px 0; }
+        .btn { background: #3376e3; color: white; border: none; padding: 15px; cursor: pointer; font-weight: bold; border-radius: 6px; width: 100%; text-transform: uppercase; }
+        .btn-limpar { background: #edf2f7; color: #4a5568; margin-top: 10px; border: 1px solid #cbd5e0; padding: 10px; cursor: pointer; border-radius: 6px; }
     </style>
 </head>
 <body>
 
-<div id="canvas-container"></div>
+<div id="viewport"></div>
 
-<aside id="controls">
-    <h2>Ajuste de Estampa</h2>
-    
-    <input type="file" id="fileInput" style="display:none" accept="image/*">
-    <button class="btn" onclick="document.getElementById('fileInput').click()">1. CARREGAR IMAGEM</button>
-    
-    <div class="instrucoes">
-        <strong>Dica de Precisão:</strong><br>
-        • A arte está sendo mapeada DIRETAMENTE no modelo 3D.<br>
-        • Clique no espaço branco para esconder as alças azuis.
+<aside id="sidebar">
+    <h2 style="font-size: 18px; color: #333; margin-top: 0;">Editor de Estampa</h2>
+    <input type="file" id="up" style="display:none" accept="image/*">
+    <button class="btn" onclick="document.getElementById('up').click()">Selecionar Foto</button>
+
+    <div class="editor-box">
+        <canvas id="c" width="340" height="143"></canvas>
     </div>
 
-    <div style="font-size: 11px; color: #a0aec0; font-weight: bold;">ÁREA DE PROJEÇÃO</div>
-    <div class="editor-wrapper">
-        <canvas id="fabricCanvas" width="350" height="147"></canvas>
-    </div>
-
-    <button class="btn btn-secundario" onclick="limparSelecao()">2. VER RESULTADO FINAL</button>
+    <button class="btn-limpar" onclick="finalizarEdicao()">Ver Sem Pontos Azuis</button>
+    <p style="font-size: 11px; color: #666; margin-top: 15px;">
+        * Use as alças laterais para esticar a largura.<br>
+        * A arte não passará por cima da alça agora.
+    </p>
 </aside>
 
 <script type="module">
     import * as THREE from 'three';
-    import { OBJLoader } from 'three/addons
+    import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+    let scene, camera, renderer, controls, mug, decal, fCanvas;
+
+    // 1. Editor 2D
+    fCanvas = new fabric.Canvas('c', { backgroundColor: '#ffffff' });
+    fabric.Object.prototype.set({
+        transparentCorners: false,
+        cornerColor: '#3376e3',
+        cornerSize: 10,
+        lockUniScaling: false // Permite esticar só para os lados
+    });
+
+    // Remove pontos azuis
+    window.finalizarEdicao = () => {
+        fCanvas.discardActiveObject();
+        fCanvas.requestRenderAll();
+    };
+
+    fCanvas.on('after:render', () => {
+        if (!decal) return;
+        const texture = new THREE.CanvasTexture(fCanvas.getElement());
+        texture.anisotropy = 16;
+        decal.material.map = texture;
+        decal.material.needsUpdate = true;
+    });
+
+    // 2. Setup 3D
+    scene = new THREE.Scene();
+    camera = new THREE.PerspectiveCamera(35, (window.innerWidth - 380) / window.innerHeight, 0.1, 1000);
+    
+    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth - 380, window.innerHeight);
+    renderer.setPixelRatio(window.devicePixelRatio);
+    document.getElementById('viewport').appendChild(renderer.domElement);
+
+    scene.add(new THREE.AmbientLight(0xffffff, 1.2));
+    const l = new THREE.DirectionalLight(0xffffff, 0.8);
+    l.position.set(5, 5, 5);
+    scene.
