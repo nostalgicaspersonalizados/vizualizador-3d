@@ -2,76 +2,53 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nostálgicas - Mockup Pro (Ajustado)</title>
-    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Nostálgicas - Mockup v3.0</title>
     <script type="importmap">
-      {
-        "imports": {
-          "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-          "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
-        }
-      }
+      { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js", "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/" } }
     </script>
     <script src="https://unpkg.com/interactjs/dist/interact.min.js"></script>
-    
     <style>
-        :root { --primary: #ff4081; --bg: #f4f4f4; }
-        body { margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg); overflow: hidden; display: flex; }
+        :root { --rosa: #ff4081; }
+        body { margin: 0; font-family: 'Segoe UI', sans-serif; background: #fff; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
         
-        /* O Painel do Editor Visual */
-        #admin-panel { 
-            width: 320px; height: 100vh; background: white; border-right: 1px solid #ddd;
-            padding: 20px; box-sizing: border-box; display: flex; flex-direction: column; gap: 15px;
-            box-shadow: 5px 0 20px rgba(0,0,0,0.05); z-index: 100;
-        }
-
-        h3 { margin: 0; font-size: 14px; color: var(--primary); text-transform: uppercase; }
-        .instrucao { font-size: 11px; color: #777; margin: 0; }
+        /* Painel Lateral/Superior */
+        #menu { width: 320px; background: white; border-right: 1px solid #ddd; padding: 20px; box-sizing: border-box; display: flex; flex-direction: column; gap: 10px; z-index: 10; }
         
-        /* O RETÂNGULO DE ÁREA REAL (Editor Estilo Canva) */
-        #area-editor {
-            width: 100%; height: 150px; border: 2px dashed #bbb;
-            background: #fafafa; position: relative; overflow: hidden;
-            display: flex; align-items: center; justify-content: center;
+        /* O Retângulo de 22.5x9.5cm (Simulado) */
+        .preview-container { 
+            width: 100%; height: 120px; border: 2px dashed var(--rosa); background: #f9f9f9; 
+            position: relative; overflow: hidden; cursor: move; touch-action: none;
         }
-        #text-help { color: #aaa; font-size: 10px; text-transform: uppercase; text-align: center; }
+        #img-edit { position: absolute; transform-origin: center; display: none; pointer-events: none; }
 
-        /* A FOTO QUE PODE SER ARRASTADA E REDIMENSIONADA (Interact.js) */
-        #img-personalizada {
-            position: absolute; display: none;
-            touch-action: none; user-select: none;
-            cursor: move; transform-origin: 0 0;
-            box-shadow: 0 0 5px rgba(0,0,0,0.2);
-            box-sizing: border-box;
+        #canvas-container { flex: 1; position: relative; background: radial-gradient(circle, #ffffff 0%, #e0e0e0 100%); }
+        
+        .btn { background: var(--rosa); color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; }
+        label { font-size: 11px; font-weight: bold; color: #555; }
+
+        /* Ajuste para Celular */
+        @media (max-width: 768px) {
+            body { flex-direction: column; }
+            #menu { width: 100%; height: auto; border-right: none; border-bottom: 1px solid #ddd; padding: 10px; }
+            .preview-container { height: 80px; }
         }
-
-        /* Botão Principal */
-        .btn-principal { 
-            background: var(--primary); color: white; border: none; width: 100%; 
-            padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 14px;
-        }
-        .btn-link { background: #333; margin-top: auto; }
-
-        /* Área do 3D */
-        #canvas-container { flex: 1; height: 100vh; position: relative; }
     </style>
 </head>
 <body>
 
-<div id="admin-panel">
-    <h3>1. Área de Impressão (22.5x9.5cm)</h3>
-    <p class="instrucao">Faça o upload e ajuste a foto visualmente:</p>
-    
-    <input type="file" id="upload" accept="image/*" style="display:none">
-    <button class="btn-principal" onclick="document.getElementById('upload').click()">CARREGAR IMAGEM</button>
+<div id="menu">
+    <h3 style="margin:0; color:var(--rosa); font-size: 16px;">EDITOR DE ESTAMPA</h3>
+    <input type="file" id="input-file" style="display:none" accept="image/*">
+    <button class="btn" onclick="document.getElementById('input-file').click()">CARREGAR FOTO</button>
 
-    <div id="area-editor">
-        <span id="text-help">PRÉVIA DA ARTE</span>
-        <img id="img-personalizada" src="">
+    <label>AJUSTE VISUAL (Arraste e use o Scroll/Pinça):</label>
+    <div class="preview-container" id="wrapper">
+        <img id="img-edit" src="">
+        <div id="placeholder" style="text-align:center; padding-top:30px; color:#ccc; font-size:10px;">ÁREA DE 22.5x9.5cm</div>
     </div>
-
-    <button class="btn-principal btn-link" onclick="gerarLink()">COPIAR LINK DO CLIENTE</button>
+    
+    <button class="btn" style="background:#333; margin-top:10px;" onclick="window.location.reload()">LIMPAR</button>
 </div>
 
 <div id="canvas-container"></div>
@@ -82,178 +59,100 @@
     import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
     let scene, camera, renderer, controls, mug, decal, texture;
-    
-    const imgPersonalizada = document.getElementById('img-personalizada');
-    const areaEditor = document.getElementById('area-editor');
-    const helpText = document.getElementById('text-help');
+    let imgPos = { x: 0, y: 0, scale: 0.5 };
 
-    // Estado da Imagem (Posição e Escala)
-    let imgState = { x: 0, y: 0, scale: 1 };
-
-    init();
+    const imgEl = document.getElementById('img-edit');
+    const wrapper = document.getElementById('wrapper');
 
     function init() {
         scene = new THREE.Scene();
         scene.background = new THREE.Color(0xffffff);
 
-        // Câmera aproximada (Foco no produto)
-        camera = new THREE.PerspectiveCamera(30, (window.innerWidth - 320) / window.innerHeight, 0.1, 1000);
-        camera.position.set(0, 0.5, 3.5);
-
+        camera = new THREE.PerspectiveCamera(35, window.innerWidth / window.innerHeight, 0.1, 1000);
+        
         renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-        renderer.setSize(window.innerWidth - 320, window.innerHeight);
         renderer.setPixelRatio(window.devicePixelRatio);
         document.getElementById('canvas-container').appendChild(renderer.domElement);
 
-        scene.add(new THREE.AmbientLight(0xffffff, 1.2));
-        const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
-        dirLight.position.set(5, 5, 5);
-        scene.add(dirLight);
+        scene.add(new THREE.AmbientLight(0xffffff, 1.5));
+        const light = new THREE.DirectionalLight(0xffffff, 1);
+        light.position.set(5, 5, 5);
+        scene.add(light);
 
         controls = new OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
-        controls.minDistance = 2.5; // Trava o zoom para o cliente
-        controls.maxDistance = 6;
 
-        const loader = new GLTFLoader();
-        loader.load('caneca.glb', (gltf) => {
+        new GLTFLoader().load('caneca.glb', (gltf) => {
             mug = gltf.scene;
-            
-            // Centraliza o modelo automaticamente
             const box = new THREE.Box3().setFromObject(mug);
             const center = box.getCenter(new THREE.Vector3());
+            const size = box.getSize(new THREE.Vector3());
             mug.position.sub(center);
-            
-            // --- CORREÇÃO TÉCNICA 1: ISOLAMENTO DO CORPO ---
-            // Força um material branco cerâmico limpo em TODA a caneca
-            mug.traverse(child => {
-                if(child.isMesh) {
-                    child.material = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.2, metalness: 0.05 });
-                }
-            });
-
             scene.add(mug);
-            checkUrl(); // Verifica se há foto pré-configurada
+
+            // Câmera Focada na Caneca
+            camera.position.set(0, 0, size.z * 3.5);
+            controls.target.set(0, 0, 0);
+
+            // CRIA A CAMADA DE ESTAMPA (Invisível até carregar foto)
+            const geo = new THREE.CylinderGeometry(size.x/1.95, size.x/1.95, size.y*0.9, 64, 1, true, -Math.PI/1.5, Math.PI*1.33);
+            decal = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ transparent: true, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -4 }));
+            decal.rotation.y = Math.PI / 2;
+            scene.add(decal);
+            
+            onWindowResize();
         });
 
-        // Configuração do Editor Visual (Interact.js)
-        setupInteract();
-
-        window.addEventListener('resize', onWindowResize);
         animate();
     }
 
-    // --- CONFIGURAÇÃO DO EDITOR VISUAL (Arrastar e Pinch-to-Zoom) ---
-    function setupInteract() {
-        interact('#img-personalizada')
-            .draggable({
-                inertia: true,
-                onmove: event => {
-                    imgState.x += event.dx;
-                    imgState.y += event.dy;
-                    updateVisuals();
-                }
-            })
-            .gesturable({
-                onmove: event => {
-                    // Pinch-to-zoom no celular
-                    imgState.scale *= (1 + event.ds);
-                    updateVisuals();
-                }
-            })
-            // Também adicionamos scroll do mouse como controle de escala (Pinch-to-zoom simulado)
-            .on('mousewheel', event => {
-                const s = 1 - (event.deltaY / 1000);
-                imgState.scale = Math.max(0.1, imgState.scale * s);
-                updateVisuals();
-                event.preventDefault();
-            });
-    }
+    function update() {
+        imgEl.style.display = 'block';
+        document.getElementById('placeholder').style.display = 'none';
+        imgEl.style.transform = `translate(${imgPos.x}px, ${imgPos.y}px) scale(${imgPos.scale})`;
 
-    function updateVisuals() {
-        // Atualiza o painel guia (CSS Transform)
-        imgPersonalizada.style.transform = `translate(${imgState.x}px, ${imgState.y}px) scale(${imgState.scale})`;
-
-        if (!texture) return;
-        
-        // --- CORREÇÃO TÉCNICA 2: ISOLAMENTO DA ESTAMPA FRONT AL---
-        // Remove decalques antigos se houver
-        if (decal) scene.remove(decal);
-
-        // Cria uma geometria de decalque curvada que cobre apenas a frente
-        // Um cilindro aberto proporcional a 22.5cm
-        const decalGeometry = new THREE.CylinderGeometry(1.03, 1.03, 2.1, 64, 1, true, -Math.PI / 1.5, Math.PI * 1.3);
-        const decalMaterial = new THREE.MeshStandardMaterial({
-            map: texture,
-            transparent: true,
-            side: THREE.DoubleSide,
-            // Evita o Z-fighting (falhas visuais)
-            polygonOffset: true, 
-            polygonOffsetFactor: -4
-        });
-
-        decal = new THREE.Mesh(decalGeometry, decalMaterial);
-        
-        // Transforma o ajuste visual para o Three.js
-        const s = 1 / imgState.scale;
-        texture.repeat.set(s, s);
-        texture.offset.set(0.5 - (imgState.x / areaEditor.offsetWidth) - (0.5/s), 0.5 - (imgState.y / areaEditor.offsetHeight) - (0.5/s));
-        
-        // Aplica e centraliza
-        decal.rotation.y = Math.PI / 2; // Gira para frente
-        scene.add(decal);
-    }
-
-    // Lógica para carregar a estampa
-    function applyTexture(source) {
-        new THREE.TextureLoader().load(source, (tex) => {
-            texture = tex;
-            
-            // CONFIGURAÇÃO CHAVE PARA NÃO REPETIR
-            texture.wrapS = THREE.ClampToEdgeWrapping;
-            texture.wrapT = THREE.ClampToEdgeWrapping;
-            
-            // Mostra a imagem no editor guia
-            imgPersonalizada.src = source;
-            imgPersonalizada.style.display = 'block';
-            helpText.style.display = 'none';
-            
-            // Reseta posição e escala inicial
-            imgState = { x: 0, y: 0, scale: 0.5 }; // Começa pequena para ser mais fácil enquadrar
-            
-            updateVisuals();
-        });
-    }
-
-    // Listeners
-    document.getElementById('upload').addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = (event) => applyTexture(event.target.result);
-            reader.readAsDataURL(file);
+        if (texture) {
+            const s = 1 / imgPos.scale;
+            texture.repeat.set(s, s);
+            texture.offset.set(0.5 - (imgPos.x / 200) - (0.5/s), 0.5 - (imgPos.y / 100) - (0.5/s));
         }
+    }
+
+    // Controle de Arrastar e Zoom
+    interact('.preview-container').draggable({
+        onmove: (e) => { imgPos.x += e.dx; imgPos.y += e.dy; update(); }
+    }).on('mousewheel', (e) => {
+        imgPos.scale = Math.max(0.1, imgPos.scale - e.deltaY / 500);
+        update();
+        e.preventDefault();
     });
 
-    function checkUrl() {
-        const p = new URLSearchParams(window.location.search);
-        if(p.get('foto')) {
-            applyTexture(p.get('foto'));
-            document.getElementById('admin-panel').style.display = 'none'; // Esconde o editor para o cliente
-        }
-    }
+    document.getElementById('input-file').addEventListener('change', (e) => {
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            new THREE.TextureLoader().load(ev.target.result, (tex) => {
+                texture = tex;
+                texture.wrapS = texture.wrapT = THREE.ClampToEdgeWrapping;
+                decal.material.map = texture;
+                decal.material.needsUpdate = true;
+                imgEl.src = ev.target.result;
+                update();
+            });
+        };
+        reader.readAsDataURL(e.target.files[0]);
+    });
 
     function onWindowResize() {
-        camera.aspect = (window.innerWidth - 320) / window.innerHeight;
+        const w = document.getElementById('canvas-container').clientWidth;
+        const h = document.getElementById('canvas-container').clientHeight;
+        camera.aspect = w / h;
         camera.updateProjectionMatrix();
-        renderer.setSize(window.innerWidth - 320, window.innerHeight);
+        renderer.setSize(w, h);
     }
 
-    function animate() {
-        requestAnimationFrame(animate);
-        controls.update();
-        renderer.render(scene, camera);
-    }
+    function animate() { requestAnimationFrame(animate); controls.update(); renderer.render(scene, camera); }
+    window.addEventListener('resize', onWindowResize);
+    init();
 </script>
 </body>
 </html>
