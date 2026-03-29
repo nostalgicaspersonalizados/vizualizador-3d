@@ -2,70 +2,61 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Nostálgicas Studio - VERSAO 10</title>
+    <title>Nostálgicas Studio - Interativo v11</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/controls/OrbitControls.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
     <style>
+        :root { --accent: #2ecc71; }
         body { margin: 0; display: flex; height: 100vh; font-family: sans-serif; background: #000; overflow: hidden; }
+        
+        /* Menu lateral que some se o link for para o cliente */
         #sidebar { 
             width: 340px; min-width: 340px; background: #1a1a1a; color: white; 
-            padding: 20px; border-right: 3px solid #2ecc71; z-index: 10; overflow-y: auto;
+            padding: 20px; border-right: 3px solid var(--accent); z-index: 10; overflow-y: auto;
         }
-        /* FUNDO EXTERIOR BRANCO PURO */
-        #render-3d { flex: 1; background: #ffffff; cursor: move; }
-        .canvas-container { background: white; border: 2px solid #333; margin-bottom: 10px; line-height: 0; }
+        body.client-mode #sidebar { display: none; } /* Esconde o menu para o cliente */
+
+        #render-3d { flex: 1; background: #ffffff; cursor: move; position: relative; }
+        .canvas-container { background: white; border: 2px solid #333; margin-bottom: 10px; }
         .btn { width: 100%; padding: 12px; margin-bottom: 8px; cursor: pointer; font-weight: bold; border: none; border-radius: 4px; text-transform: uppercase; }
         .btn-img { background: #333; color: white; }
-        .btn-save { background: #2ecc71; color: white; margin-top: 15px; }
-        label { display: block; font-size: 10px; color: #888; margin: 10px 0 5px 0; text-transform: uppercase; }
-        input[type="range"] { width: 100%; accent-color: #2ecc71; }
-        .colors { display: flex; gap: 8px; }
-        .c-btn { width: 30px; height: 30px; border-radius: 50%; cursor: pointer; border: 2px solid #444; }
-        .c-btn.active { border-color: #2ecc71; }
+        .btn-share { background: #3498db; color: white; margin-top: 10px; }
+        .btn-save { background: var(--accent); color: white; }
+        label { display: block; font-size: 10px; color: #888; margin: 10px 0 5px 0; }
     </style>
 </head>
 <body>
 
 <aside id="sidebar">
-    <h2 style="color:#2ecc71; margin:0;">NOSTÁLGICAS</h2>
-    <p style="font-size:9px; color:#666; margin-bottom:20px;">MOCKUP REALISTA V10</p>
+    <h2 style="color:var(--accent); margin:0;">NOSTÁLGICAS</h2>
+    <p style="font-size:9px; color:#666; margin-bottom:20px;">EDITOR DE VENDAS</p>
 
-    <label>1. ARTE (CLIQUE NA FOTO PARA AJUSTAR TAMANHO)</label>
+    <label>1. DESENHO DA ESTAMPA</label>
     <div class="canvas-container">
         <canvas id="c2d" width="450" height="190" style="width:100%; height:auto;"></canvas>
     </div>
 
-    <button class="btn btn-img" onclick="document.getElementById('up').click()">+ Inserir Foto</button>
-    <button class="btn btn-img" onclick="addT()">+ Inserir Texto</button>
+    <button class="btn btn-img" onclick="document.getElementById('up').click()">+ Foto</button>
+    <button class="btn btn-img" onclick="addT()">+ Texto</button>
     <input type="file" id="up" style="display:none" accept="image/*">
 
-    <label>2. COR DO INTERIOR / ALÇA</label>
-    <div class="colors">
-        <div class="c-btn active" style="background:#fff" onclick="chC(this,'#fff')"></div>
-        <div class="c-btn" style="background:#000" onclick="chC(this,'#000')"></div>
-        <div class="c-btn" style="background:#ffc0cb" onclick="chC(this,'#ffc0cb')"></div>
-    </div>
+    <label>2. COMPARTILHAR COM CLIENTE</label>
+    <button class="btn btn-share" onclick="gerarLink()">GERAR LINK INTERATIVO</button>
+    <p id="status" style="font-size:10px; color:var(--accent); text-align:center;"></p>
 
-    <label>3. GIRAR ARTE NA CANECA</label>
-    <input type="range" id="rot" min="-0.5" max="0.5" step="0.001" value="0">
-
-    <button class="btn btn-save" onclick="save()">BAIXAR FOTO MOCKUP</button>
+    <button class="btn btn-save" style="margin-top:20px;" onclick="save()">Baixar Foto</button>
 </aside>
 
-<div id="render-3d"></div>
+<div id="render-3d">
+    <div id="msg-cliente" style="display:none; position:absolute; top:20px; left:20px; background:rgba(0,0,0,0.7); color:white; padding:10px; border-radius:20px; font-size:12px;">
+        Gire a caneca com o dedo para ver os detalhes ↺
+    </div>
+</div>
 
 <script>
-    // --- EDITOR DE ARTE (FABRIC.JS) ---
     const fCanvas = new fabric.Canvas('c2d', { backgroundColor: '#fff' });
-    
-    // Configura os quadradinhos de redimensionar (VERDES)
-    fabric.Object.prototype.set({
-        cornerColor: '#2ecc71',
-        cornerStyle: 'circle',
-        cornerSize: 12,
-        transparentCorners: false
-    });
+    fabric.Object.prototype.set({ cornerColor: '#2ecc71', cornerSize: 12, transparentCorners: false });
 
     fCanvas.on('after:render', () => { if(tex) tex.needsUpdate = true; });
 
@@ -77,86 +68,72 @@
     document.getElementById('up').onchange = (e) => {
         const reader = new FileReader();
         reader.onload = (f) => fabric.Image.fromURL(f.target.result, (img) => {
-            img.scaleToWidth(150);
-            fCanvas.add(img).centerObject(img).setActiveObject(img);
+            img.scaleToWidth(150); fCanvas.add(img).centerObject(img).setActiveObject(img);
         });
         reader.readAsDataURL(e.target.files[0]);
     };
 
-    // --- MOTOR 3D (THREE.JS) ---
+    // --- LÓGICA DO LINK INTERATIVO ---
+    function gerarLink() {
+        fCanvas.discardActiveObject().renderAll();
+        const artData = fCanvas.toDataURL({ format: 'png', quality: 0.5 });
+        const compressed = btoa(artData); // Converte em código de texto
+        const shareURL = window.location.origin + window.location.pathname + "?art=" + encodeURIComponent(compressed);
+        
+        navigator.clipboard.writeText(shareURL);
+        document.getElementById('status').innerText = "LINK COPIADO! Cole no WhatsApp.";
+    }
+
+    // Verifica se é o cliente abrindo o link
+    const urlParams = new URLSearchParams(window.location.search);
+    if(urlParams.has('art')) {
+        document.body.classList.add('client-mode');
+        document.getElementById('msg-cliente').style.display = 'block';
+        const rawArt = atob(decodeURIComponent(urlParams.get('art')));
+        fabric.Image.fromURL(rawArt, (img) => {
+            fCanvas.clear();
+            fCanvas.setBackgroundColor('#fff');
+            fCanvas.add(img);
+            fCanvas.renderAll();
+        });
+    }
+
+    // --- MOTOR 3D (IGUAL AO ANTERIOR) ---
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0xffffff); // CHÃO BRANCO
+    scene.background = new THREE.Color(0xffffff);
     const container = document.getElementById('render-3d');
     const cam = new THREE.PerspectiveCamera(40, container.clientWidth / container.clientHeight, 0.1, 1000);
     cam.position.set(0, 1.5, 7);
-
     const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
     renderer.setSize(container.clientWidth, container.clientHeight);
     container.appendChild(renderer.domElement);
-
     const controls = new THREE.OrbitControls(cam, renderer.domElement);
     controls.enableDamping = true;
+    scene.add(new THREE.AmbientLight(0xffffff, 1.2));
 
-    scene.add(new THREE.AmbientLight(0xffffff, 1.1));
-    const light = new THREE.DirectionalLight(0xffffff, 0.5);
-    light.position.set(5, 10, 7);
-    scene.add(light);
-
-    // --- A CANECA SÓLIDA ---
     const tex = new THREE.CanvasTexture(fCanvas.getElement());
-    tex.wrapS = THREE.RepeatWrapping;
-    const matExt = new THREE.MeshPhongMaterial({ map: tex, shininess: 80 });
-    const matInt = new THREE.MeshPhongMaterial({ color: 0xffffff, shininess: 80 });
-
+    const matExt = new THREE.MeshPhongMaterial({ map: tex });
+    const matInt = new THREE.MeshPhongMaterial({ color: 0xffffff });
     const mug = new THREE.Group();
-    // Exterior
     const pE = []; for(let i=0; i<=10; i++) pE.push(new THREE.Vector2(1.1, (i-5)*0.25));
     mug.add(new THREE.Mesh(new THREE.LatheGeometry(pE, 64), matExt));
-    // Interior
     const pI = []; for(let i=0; i<=10; i++) pI.push(new THREE.Vector2(1.05, (i-5)*0.24));
     const inner = new THREE.Mesh(new THREE.LatheGeometry(pI, 64), matInt);
-    inner.rotation.x = Math.PI;
-    mug.add(inner);
-    // Topo e Fundo
-    const ring = new THREE.Mesh(new THREE.RingGeometry(1.05, 1.1, 64), matInt);
-    ring.rotation.x = -Math.PI/2; ring.position.y = 1.25;
-    mug.add(ring);
+    inner.rotation.x = Math.PI; mug.add(inner);
     const bottom = new THREE.Mesh(new THREE.CircleGeometry(1.1, 64), matInt);
-    bottom.rotation.x = -Math.PI/2; bottom.position.y = -1.25;
-    mug.add(bottom);
-    // Alça
+    bottom.rotation.x = -Math.PI/2; bottom.position.y = -1.25; mug.add(bottom);
     const handle = new THREE.Mesh(new THREE.TorusGeometry(0.75, 0.12, 12, 48, Math.PI), matInt);
-    handle.position.set(1.1, 0, 0); handle.rotation.z = -Math.PI/2;
-    mug.add(handle);
-
+    handle.position.set(1.1, 0, 0); handle.rotation.z = -Math.PI/2; mug.add(handle);
     scene.add(mug);
-
-    // Sombra de contato
-    const shadow = new THREE.Mesh(new THREE.CircleGeometry(1.2, 32), new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.1 }));
-    shadow.rotation.x = -Math.PI/2; shadow.position.y = -1.26;
-    scene.add(shadow);
-
-    // --- FUNÇÕES ---
-    window.chC = (btn, c) => {
-        matInt.color.set(c);
-        document.querySelectorAll('.c-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-    };
-
-    window.save = () => {
-        fCanvas.discardActiveObject(); fCanvas.renderAll();
-        setTimeout(() => {
-            const a = document.createElement('a');
-            a.download = 'Mockup_Nostalgicas.png';
-            a.href = renderer.domElement.toDataURL();
-            a.click();
-        }, 150);
-    };
-
-    document.getElementById('rot').oninput = (e) => tex.offset.x = parseFloat(e.target.value);
 
     function anim() { requestAnimationFrame(anim); controls.update(); renderer.render(scene, cam); }
     anim();
+
+    function save() {
+        fCanvas.discardActiveObject().renderAll();
+        const a = document.createElement('a');
+        a.download = 'Nostalgicas.png'; a.href = renderer.domElement.toDataURL(); a.click();
+    }
 </script>
 </body>
 </html>
