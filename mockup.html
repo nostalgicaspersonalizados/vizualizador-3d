@@ -2,97 +2,80 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Nostálgicas Studio - Mockup Profissional</title>
+    <title>Nostálgicas Studio - Power Mockup</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
     <style>
-        body { margin: 0; display: flex; height: 100vh; font-family: sans-serif; background: #111; overflow: hidden; }
+        :root { --accent: #2ecc71; --dark: #1a1a1a; }
+        body { margin: 0; display: flex; height: 100vh; font-family: 'Segoe UI', sans-serif; background: #000; overflow: hidden; }
         
-        /* MENU LATERAL */
+        /* SIDEBAR ESTILO RAPID MOCKUP */
         #sidebar { 
-            width: 320px; min-width: 320px; background: #1a1a1a; color: white; 
-            padding: 20px; border-right: 3px solid #2ecc71; z-index: 10; overflow-y: auto;
+            width: 350px; min-width: 350px; background: var(--dark); color: white; 
+            padding: 20px; border-right: 3px solid var(--accent); overflow-y: auto; z-index: 10;
         }
 
-        /* ÁREA DO 3D COM DEGRADÊ */
-        #render-3d { 
-            flex: 1; 
-            background: radial-gradient(circle, #ffffff 0%, #bbbbbb 100%); 
-            cursor: move; 
-        }
+        #render-3d { flex: 1; background: #eee; cursor: move; position: relative; }
 
-        h2 { color: #2ecc71; margin: 0 0 5px 0; font-size: 18px; text-transform: uppercase; }
-        .canvas-container { background: white; margin-bottom: 15px; border: 1px solid #444; line-height: 0; }
+        .section-title { font-size: 11px; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; margin: 20px 0 10px 0; border-bottom: 1px solid #333; padding-bottom: 5px; }
         
-        .btn { width: 100%; padding: 12px; margin-bottom: 10px; cursor: pointer; font-weight: bold; border: none; border-radius: 4px; text-transform: uppercase; }
-        .btn-img { background: #333; color: white; border: 1px solid #555; }
-        .btn-save { background: #2ecc71; color: white; margin-top: 10px; }
+        .canvas-area { background: white; margin-bottom: 10px; border-radius: 4px; overflow: hidden; line-height: 0; }
+        
+        .grid-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .btn { padding: 10px; cursor: pointer; font-weight: bold; border: none; border-radius: 4px; text-transform: uppercase; font-size: 11px; transition: 0.2s; }
+        .btn-main { background: #333; color: white; border: 1px solid #555; }
+        .btn-main:hover { background: #444; }
+        .btn-action { background: var(--accent); color: white; }
+        .btn-danger { background: #e74c3c; color: white; }
 
-        label { display: block; font-size: 10px; color: #888; margin: 15px 0 5px 0; text-transform: uppercase; font-weight: bold; }
-        input[type="range"] { width: 100%; cursor: pointer; accent-color: #2ecc71; }
+        label { display: block; font-size: 10px; color: #888; margin: 10px 0 5px 0; }
+        input[type="range"] { width: 100%; accent-color: var(--accent); }
 
-        .colors { display: flex; gap: 10px; margin-top: 5px; }
-        .c-btn { width: 35px; height: 35px; border-radius: 50%; cursor: pointer; border: 2px solid #444; transition: 0.2s; }
-        .c-btn:hover { transform: scale(1.1); }
-        .c-btn.active { border-color: #2ecc71; box-shadow: 0 0 10px rgba(46, 204, 113, 0.5); }
+        .color-row { display: flex; gap: 8px; flex-wrap: wrap; }
+        .c-pill { width: 30px; height: 30px; border-radius: 50%; cursor: pointer; border: 2px solid #444; }
+        .c-pill.active { border-color: var(--accent); transform: scale(1.1); }
+
+        .bg-select { width: 100%; padding: 8px; background: #333; color: white; border: 1px solid #555; border-radius: 4px; cursor: pointer; }
     </style>
 </head>
 <body>
 
 <aside id="sidebar">
-    <h2>NOSTÁLGICAS</h2>
-    <p style="font-size: 10px; color: #666; margin-bottom: 15px;">MOCKUP 3D - EDITÁVEL</p>
+    <h2 style="margin:0; font-size: 22px; color: var(--accent);">NOSTÁLGICAS</h2>
+    <p style="font-size: 10px; color: #666;">Mockup System v2.0</p>
 
-    <div class="canvas-container">
+    <div class="section-title">1. Design da Estampa</div>
+    <div class="canvas-area">
         <canvas id="c2d" width="450" height="190" style="width: 100%; height: auto;"></canvas>
     </div>
-
+    
+    <div class="grid-btns">
+        <button class="btn btn-main" onclick="document.getElementById('up').click()">+ Imagem</button>
+        <button class="btn btn-main" onclick="addTexto()">+ Texto</button>
+    </div>
     <input type="file" id="up" style="display:none" accept="image/*">
-    <button class="btn btn-img" onclick="document.getElementById('up').click()">+ Inserir Arte</button>
+    <button class="btn btn-danger" style="width:100%; margin-top:10px;" onclick="remover()">Remover Selecionado</button>
 
-    <label>Cor do Interior / Alça</label>
-    <div class="colors">
-        <div class="c-btn active" style="background:#ffffff" onclick="chC(this, '#ffffff')"></div>
-        <div class="c-btn" style="background:#111111" onclick="chC(this, '#111111')"></div>
-        <div class="c-btn" style="background:#ffc0cb" onclick="chC(this, '#ffc0cb')"></div>
+    <div class="section-title">2. Configuração da Caneca</div>
+    <label>Cor Interna / Alça</label>
+    <div class="color-row">
+        <div class="c-pill active" style="background:#ffffff" onclick="chMugColor(this, '#ffffff')"></div>
+        <div class="c-pill" style="background:#111111" onclick="chMugColor(this, '#111111')"></div>
+        <div class="c-pill" style="background:#ffc0cb" onclick="chMugColor(this, '#ffc0cb')"></div>
+        <div class="c-pill" style="background:#3498db" onclick="chMugColor(this, '#3498db')"></div>
     </div>
 
-    <label>Girar Arte (Horizontal)</label>
+    <label>Girar Arte na Caneca</label>
     <input type="range" id="rot" min="-0.5" max="0.5" step="0.001" value="0">
-    
-    <label>Altura da Câmera</label>
-    <input type="range" id="camY" min="-1" max="4" step="0.1" value="0.8">
 
-    <button class="btn btn-save" onclick="save()">BAIXAR FOTO MOCKUP</button>
-</aside>
+    <div class="section-title">3. Cenário e Câmera</div>
+    <label>Fundo do Mockup</label>
+    <select class="bg-select" onchange="chBackground(this.value)">
+        <option value="radial-gradient(circle, #ffffff 0%, #bbbbbb 100%)">Estúdio Clean</option>
+        <option value="url('https://images.unsplash.com/photo-1556910103-1c02745aae4d?q=80&w=1000') center/cover">Cozinha Moderna</option>
+        <option value="url('https://images.unsplash.com/photo-1517817748493-49ec54a32465?q=80&w=1000') center/cover">Mesa de Madeira</option>
+        <option value="#333">Cinza Escuro</option>
+    </select>
 
-<div id="render-3d"></div>
-
-<script>
-    // 1. Editor 2D (Fabric.js)
-    const fCanvas = new fabric.Canvas('c2d', { backgroundColor: '#ffffff' });
-    fCanvas.on('after:render', () => { if(tex) tex.needsUpdate = true; });
-
-    // 2. Setup do 3D
-    const scene = new THREE.Scene();
-    const container = document.getElementById('render-3d');
-    const cam = new THREE.PerspectiveCamera(40, container.clientWidth / container.clientHeight, 0.1, 1000);
-    cam.position.set(0, 0.8, 7);
-
-    const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
-    renderer.setSize(container.clientWidth, container.clientHeight);
-    renderer.setPixelRatio(window.devicePixelRatio);
-    container.appendChild(renderer.domElement);
-
-    // Iluminação que cria volume (Luz e Sombra)
-    scene.add(new THREE.AmbientLight(0xffffff, 0.8)); // Luz base
-    const mainLight = new THREE.DirectionalLight(0xffffff, 0.7);
-    mainLight.position.set(5, 10, 7);
-    scene.add(mainLight);
-
-    // 3. A Caneca
-    const tex = new THREE.CanvasTexture(fCanvas.getElement());
-    tex.wrapS = THREE.RepeatWrapping;
-
-    const matExt = new THREE.MeshPhongMaterial({ map: tex, side: THREE.FrontSide, shininess: 90 });
-    const matInt = new THREE.MeshPhongMaterial({ color: 0xffffff, side: THREE.FrontSide, shininess: 100 });
+    <label>Altura (Câmera)</label>
+    <input type="range" id="camY" min="-1" max
