@@ -156,4 +156,105 @@
         
         // Centralização absoluta
         const box = new THREE.Box3().setFromObject(obj);
-        const center = box
+        const center = box.getCenter(new THREE.Vector3());
+        obj.position.sub(center);
+
+        // Aplica o mapeamento UV customizado na geometria
+        aplicarMapeamentoUV(canecaMesh.geometry);
+
+        // Cria o material da porcelana JÁ COM A TEXTURA embutida
+        canecaMaterial = new THREE.MeshPhysicalMaterial({ 
+            color: 0xffffff,
+            map: texture3d, // <--- A ARTE ENTRA AQUI DIRETAMENTE
+            roughness: 0.15,
+            clearcoat: 1.0,
+            clearcoatRoughness: 0.1
+        });
+
+        canecaMesh.material = canecaMaterial;
+        scene.add(obj);
+
+    }, undefined, (error) => console.error("Erro ao carregar mug.obj. Verifique se o arquivo está na mesma pasta."));
+
+    // --- 5. EVENTOS DOS CONTROLES (MANTENDO A LÓGICA) ---
+    
+    // Tamanho da caneca
+    document.getElementById('escala-caneca').oninput = (e) => {
+        if (canecaMesh) {
+            const s = parseFloat(e.target.value);
+            canecaMesh.parent.scale.set(s, s, s);
+        }
+    };
+
+    // Girar Arte (Usa Offset da Textura)
+    document.getElementById('rotacao').oninput = (e) => {
+        if (texture3d) {
+            // Movemos a textura horizontalmente (S)
+            texture3d.offset.x = parseFloat(e.target.value) / (Math.PI * 2);
+        }
+    };
+
+    // Altura Vertical (Usa Offset da Textura)
+    document.getElementById('altura').oninput = (e) => {
+        if (texture3d) {
+            // Movemos a textura verticalmente (T)
+            texture3d.offset.y = parseFloat(e.target.value);
+        }
+    };
+
+    // Zoom da Arte (Usa Repeat da Textura)
+    document.getElementById('zoom-arte').oninput = (e) => {
+        if (texture3d) {
+            const s = 1 / parseFloat(e.target.value);
+            texture3d.repeat.set(s, s); // Ajusta o "zoom" repetindo menos ou mais
+            
+            // Mantém a textura centralizada ao dar zoom
+            texture3d.offset.x = (1 - s) / 2 + (parseFloat(document.getElementById('rotacao').value) / (Math.PI * 2));
+            texture3d.offset.y = (1 - s) / 2 + parseFloat(document.getElementById('altura').value);
+        }
+    };
+
+    document.getElementById('zoom-camera').oninput = (e) => { camera.position.z = parseFloat(e.target.value); };
+    document.getElementById('luz-int').oninput = (e) => { ambientLight.intensity = parseFloat(e.target.value); };
+
+    // --- 6. UPLOAD DE IMAGEM ---
+    document.getElementById('input-imagem').onchange = (e) => {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            fabric.Image.fromURL(event.target.result, (img) => {
+                img.scaleToWidth(200);
+                fCanvas.add(img);
+                fCanvas.centerObject(img);
+                fCanvas.setActiveObject(img);
+            });
+        };
+        reader.readAsDataURL(e.target.files[0]);
+    };
+
+    // --- 7. SALVAR MOCKUP ---
+    window.salvarFoto = () => {
+        fCanvas.discardActiveObject();
+        fCanvas.requestRenderAll();
+        setTimeout(() => {
+            const link = document.createElement('a');
+            link.download = 'Mockup_Direto_Nostalgicas.png';
+            link.href = renderer.domElement.toDataURL('image/png');
+            link.click();
+        }, 100);
+    };
+
+    function animate() {
+        requestAnimationFrame(animate);
+        controls.update();
+        renderer.render(scene, camera);
+    }
+    animate();
+
+    window.onresize = () => {
+        camera.aspect = (window.innerWidth - 380) / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth - 380, window.innerHeight);
+    };
+</script>
+</body>
+</html>
