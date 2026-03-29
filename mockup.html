@@ -2,51 +2,46 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Nostálgicas Studio - Mockup 3D v5</title>
+    <title>Nostálgicas Studio - Mockup Profissional</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
     <style>
-        body { margin: 0; padding: 0; display: flex; height: 100vh; font-family: Arial, sans-serif; background: #000; overflow: hidden; }
+        body { margin: 0; display: flex; height: 100vh; font-family: sans-serif; background: #111; overflow: hidden; }
         
-        /* MENU LATERAL FORÇADO */
+        /* MENU LATERAL */
         #sidebar { 
-            width: 320px; 
-            min-width: 320px;
-            background: #1a1a1a; 
-            color: white; 
-            padding: 20px; 
-            border-right: 3px solid #2ecc71; 
-            display: flex; 
-            flex-direction: column;
-            z-index: 999;
-            overflow-y: auto;
+            width: 320px; min-width: 320px; background: #1a1a1a; color: white; 
+            padding: 20px; border-right: 3px solid #2ecc71; z-index: 10; overflow-y: auto;
         }
 
-        #render-3d { flex: 1; background: #ffffff; cursor: move; }
+        /* ÁREA DO 3D COM DEGRADÊ */
+        #render-3d { 
+            flex: 1; 
+            background: radial-gradient(circle, #ffffff 0%, #bbbbbb 100%); 
+            cursor: move; 
+        }
 
-        h2 { color: #2ecc71; margin: 0 0 10px 0; font-size: 20px; }
-        .canvas-container { background: white; margin-bottom: 15px; border: 1px solid #333; line-height: 0; }
+        h2 { color: #2ecc71; margin: 0 0 5px 0; font-size: 18px; text-transform: uppercase; }
+        .canvas-container { background: white; margin-bottom: 15px; border: 1px solid #444; line-height: 0; }
         
-        .btn { 
-            width: 100%; padding: 12px; margin-bottom: 10px; cursor: pointer; 
-            font-weight: bold; border: none; border-radius: 4px; text-transform: uppercase; 
-        }
-        .btn-img { background: #444; color: white; }
+        .btn { width: 100%; padding: 12px; margin-bottom: 10px; cursor: pointer; font-weight: bold; border: none; border-radius: 4px; text-transform: uppercase; }
+        .btn-img { background: #333; color: white; border: 1px solid #555; }
         .btn-save { background: #2ecc71; color: white; margin-top: 10px; }
 
-        label { display: block; font-size: 11px; color: #aaa; margin: 15px 0 5px 0; text-transform: uppercase; }
-        input[type="range"] { width: 100%; cursor: pointer; }
+        label { display: block; font-size: 10px; color: #888; margin: 15px 0 5px 0; text-transform: uppercase; font-weight: bold; }
+        input[type="range"] { width: 100%; cursor: pointer; accent-color: #2ecc71; }
 
         .colors { display: flex; gap: 10px; margin-top: 5px; }
-        .c-btn { width: 35px; height: 35px; border-radius: 50%; cursor: pointer; border: 2px solid #444; }
-        .c-btn.active { border-color: #2ecc71; transform: scale(1.1); }
+        .c-btn { width: 35px; height: 35px; border-radius: 50%; cursor: pointer; border: 2px solid #444; transition: 0.2s; }
+        .c-btn:hover { transform: scale(1.1); }
+        .c-btn.active { border-color: #2ecc71; box-shadow: 0 0 10px rgba(46, 204, 113, 0.5); }
     </style>
 </head>
 <body>
 
 <aside id="sidebar">
     <h2>NOSTÁLGICAS</h2>
-    <p style="font-size: 10px; color: #666; margin-bottom: 15px;">MOCKUP 3D - ÁREA 22,5x9,5cm</p>
+    <p style="font-size: 10px; color: #666; margin-bottom: 15px;">MOCKUP 3D - EDITÁVEL</p>
 
     <div class="canvas-container">
         <canvas id="c2d" width="450" height="190" style="width: 100%; height: auto;"></canvas>
@@ -55,7 +50,7 @@
     <input type="file" id="up" style="display:none" accept="image/*">
     <button class="btn btn-img" onclick="document.getElementById('up').click()">+ Inserir Arte</button>
 
-    <label>Cor do Interior e Alça</label>
+    <label>Cor do Interior / Alça</label>
     <div class="colors">
         <div class="c-btn active" style="background:#ffffff" onclick="chC(this, '#ffffff')"></div>
         <div class="c-btn" style="background:#111111" onclick="chC(this, '#111111')"></div>
@@ -68,114 +63,36 @@
     <label>Altura da Câmera</label>
     <input type="range" id="camY" min="-1" max="4" step="0.1" value="0.8">
 
-    <button class="btn btn-save" onclick="save()">BAIXAR FOTO PARA CLIENTE</button>
+    <button class="btn btn-save" onclick="save()">BAIXAR FOTO MOCKUP</button>
 </aside>
 
 <div id="render-3d"></div>
 
 <script>
-    // 1. Editor 2D
+    // 1. Editor 2D (Fabric.js)
     const fCanvas = new fabric.Canvas('c2d', { backgroundColor: '#ffffff' });
     fCanvas.on('after:render', () => { if(tex) tex.needsUpdate = true; });
 
-    // 2. Setup 3D
+    // 2. Setup do 3D
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0xffffff);
     const container = document.getElementById('render-3d');
     const cam = new THREE.PerspectiveCamera(40, container.clientWidth / container.clientHeight, 0.1, 1000);
     cam.position.set(0, 0.8, 7);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
     renderer.setSize(container.clientWidth, container.clientHeight);
+    renderer.setPixelRatio(window.devicePixelRatio);
     container.appendChild(renderer.domElement);
 
-    scene.add(new THREE.AmbientLight(0xffffff, 1.2));
-    const light = new THREE.DirectionalLight(0xffffff, 0.6);
-    light.position.set(5, 10, 7);
-    scene.add(light);
+    // Iluminação que cria volume (Luz e Sombra)
+    scene.add(new THREE.AmbientLight(0xffffff, 0.8)); // Luz base
+    const mainLight = new THREE.DirectionalLight(0xffffff, 0.7);
+    mainLight.position.set(5, 10, 7);
+    scene.add(mainLight);
 
     // 3. A Caneca
     const tex = new THREE.CanvasTexture(fCanvas.getElement());
     tex.wrapS = THREE.RepeatWrapping;
 
-    const matExt = new THREE.MeshPhongMaterial({ map: tex, side: THREE.FrontSide });
-    const matInt = new THREE.MeshPhongMaterial({ color: 0xffffff, side: THREE.FrontSide });
-
-    const mug = new THREE.Group();
-
-    // Peças da Caneca
-    const pE = []; for(let i=0; i<=10; i++) pE.push(new THREE.Vector2(1.1, (i-5)*0.25));
-    mug.add(new THREE.Mesh(new THREE.LatheGeometry(pE, 64), matExt));
-
-    const pI = []; for(let i=0; i<=10; i++) pI.push(new THREE.Vector2(1.05, (i-5)*0.24));
-    const inner = new THREE.Mesh(new THREE.LatheGeometry(pI, 64), matInt);
-    inner.rotation.x = Math.PI;
-    mug.add(inner);
-
-    const bottom = new THREE.Mesh(new THREE.CircleGeometry(1.1, 64), matInt);
-    bottom.rotation.x = -Math.PI/2; bottom.position.y = -1.25;
-    mug.add(bottom);
-
-    const ring = new THREE.Mesh(new THREE.RingGeometry(1.05, 1.1, 64), matInt);
-    ring.rotation.x = -Math.PI/2; ring.position.y = 1.25;
-    mug.add(ring);
-
-    const handle = new THREE.Mesh(new THREE.TorusGeometry(0.75, 0.12, 12, 48, Math.PI), matInt);
-    handle.position.set(1.1, 0, 0); handle.rotation.z = -Math.PI/2;
-    mug.add(handle);
-
-    scene.add(mug);
-
-    // 4. Interações
-    window.chC = (el, c) => {
-        matInt.color.set(c);
-        document.querySelectorAll('.c-btn').forEach(b => b.classList.remove('active'));
-        el.classList.add('active');
-    };
-
-    document.getElementById('up').onchange = (e) => {
-        const r = new FileReader();
-        r.onload = (f) => fabric.Image.fromURL(f.target.result, (img) => {
-            img.scaleToWidth(200); fCanvas.add(img).centerObject(img);
-        });
-        r.readAsDataURL(e.target.files[0]);
-    };
-
-    window.save = () => {
-        fCanvas.discardActiveObject(); fCanvas.renderAll();
-        setTimeout(() => {
-            const a = document.createElement('a');
-            a.download = 'Mockup_Nostalgicas.png';
-            a.href = renderer.domElement.toDataURL();
-            a.click();
-        }, 100);
-    };
-
-    // Girar com Mouse
-    let isD = false; let pX;
-    container.onmousedown = (e) => { isD = true; pX = e.clientX; };
-    window.onmouseup = () => isD = false;
-    window.onmousemove = (e) => {
-        if(!isD) return;
-        mug.rotation.y += (e.clientX - pX) * 0.01;
-        pX = e.clientX;
-    };
-
-    // Sliders
-    document.getElementById('rot').oninput = (e) => tex.offset.x = parseFloat(e.target.value);
-    document.getElementById('camY').oninput = (e) => {
-        cam.position.y = parseFloat(e.target.value);
-        cam.lookAt(0,0,0);
-    };
-
-    function anim() { requestAnimationFrame(anim); renderer.render(scene, cam); }
-    anim();
-
-    window.onresize = () => {
-        cam.aspect = container.clientWidth / container.clientHeight;
-        cam.updateProjectionMatrix();
-        renderer.setSize(container.clientWidth, container.clientHeight);
-    };
-</script>
-</body>
-</html>
+    const matExt = new THREE.MeshPhongMaterial({ map: tex, side: THREE.FrontSide, shininess: 90 });
+    const matInt = new THREE.MeshPhongMaterial({ color: 0xffffff, side: THREE.FrontSide, shininess: 100 });
