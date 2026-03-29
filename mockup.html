@@ -108,3 +108,12 @@
     };
 
     // 5. SLIDERS
+    document.getElementById('rotacao').oninput = (e) => { if(estampa) estampa.rotation.y = parseFloat(e.target.value); };
+    document.getElementById('altura').oninput = (e) => { if(estampa) estampa.position.y = parseFloat(e.target.value); };
+    document.getElementById('zoom').oninput = (e) => { if(estampa) { const s = parseFloat(e.target.value); estampa.scale.set(s,s,s); } };
+
+    function animate() { requestAnimationFrame(animate); controls.update(); renderer.render(scene, camera); }
+    animate();
+</script>
+</body>
+</html>
